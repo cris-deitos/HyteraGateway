@@ -1,16 +1,26 @@
 using HyteraGateway.Core.Interfaces;
 using HyteraGateway.Core.Models;
+using HyteraGateway.Radio.Protocol.Hytera;
 using Microsoft.Extensions.Logging;
+using System.Text;
+using System.Text.Json;
 
 namespace HyteraGateway.Radio.Services;
 
 /// <summary>
 /// Service for connecting to and communicating with Hytera radios
 /// </summary>
-public class HyteraConnectionService : IRadioService
+public class HyteraConnectionService : IRadioService, IDisposable
 {
     private readonly ILogger<HyteraConnectionService> _logger;
-    private bool _isConnected;
+    private HyteraConnection? _connection;
+    private string? _radioIp;
+    private uint _dispatcherId;
+
+    /// <summary>
+    /// Event raised when a radio event occurs
+    /// </summary>
+    public event EventHandler<RadioEvent>? RadioEvent;
 
     /// <summary>
     /// Initializes a new instance of the HyteraConnectionService
@@ -21,24 +31,62 @@ public class HyteraConnectionService : IRadioService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Configures the connection parameters
+    /// </summary>
+    /// <param name="radioIp">Radio IP address</param>
+    /// <param name="dispatcherId">Dispatcher DMR ID</param>
+    public void Configure(string radioIp, uint dispatcherId)
+    {
+        _radioIp = radioIp;
+        _dispatcherId = dispatcherId;
+    }
+
     /// <inheritdoc/>
     public async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Connecting to Hytera radio via USB NCM...");
+        if (string.IsNullOrEmpty(_radioIp))
+        {
+            _logger.LogError("Radio IP not configured. Call Configure() first.");
+            return false;
+        }
 
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement USB NCM connection logic
-        // 1. Detect USB NCM interface
-        // 2. Establish network connection (typically 192.168.x.x)
-        // 3. Open control socket on port 50000
-        // 4. Send authentication/handshake packets
-        // 5. Start listening for incoming packets
+        _logger.LogInformation("Connecting to Hytera radio at {RadioIp}...", _radioIp);
 
-        await Task.Delay(100, cancellationToken); // Simulate connection delay
+        try
+        {
+            _connection = new HyteraConnection(_radioIp, _dispatcherId, 50000);
+            
+            // Subscribe to events
+            _connection.PacketReceived += OnPacketReceived;
+            _connection.ConnectionLost += OnConnectionLost;
 
-        _isConnected = true;
-        _logger.LogInformation("Successfully connected to Hytera radio");
-        return true;
+            // Connect with optional authentication
+            bool success = await _connection.ConnectAsync(null, cancellationToken);
+
+            if (success)
+            {
+                _logger.LogInformation("Successfully connected to Hytera radio");
+                
+                // Raise connected event
+                RaiseRadioEvent(new RadioEvent
+                {
+                    EventType = RadioEventType.Connected,
+                    RadioDmrId = (int)_dispatcherId
+                });
+            }
+            else
+            {
+                _logger.LogError("Failed to connect to Hytera radio");
+            }
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error connecting to Hytera radio");
+            return false;
+        }
     }
 
     /// <inheritdoc/>
@@ -46,15 +94,23 @@ public class HyteraConnectionService : IRadioService
     {
         _logger.LogInformation("Disconnecting from Hytera radio...");
 
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement disconnect logic
-        // 1. Send disconnect packet
-        // 2. Close sockets
-        // 3. Clean up resources
+        if (_connection != null)
+        {
+            _connection.PacketReceived -= OnPacketReceived;
+            _connection.ConnectionLost -= OnConnectionLost;
+            
+            await _connection.DisconnectAsync();
+            _connection.Dispose();
+            _connection = null;
 
-        await Task.Delay(100, cancellationToken); // Simulate disconnect delay
+            // Raise disconnected event
+            RaiseRadioEvent(new RadioEvent
+            {
+                EventType = RadioEventType.Disconnected,
+                RadioDmrId = (int)_dispatcherId
+            });
+        }
 
-        _isConnected = false;
         _logger.LogInformation("Disconnected from Hytera radio");
     }
 
@@ -63,22 +119,28 @@ public class HyteraConnectionService : IRadioService
     {
         _logger.LogInformation("Sending PTT command to radio {DmrId}: {Action}", dmrId, press ? "PRESS" : "RELEASE");
 
-        if (!_isConnected)
+        if (_connection == null || !_connection.IsConnected)
         {
             _logger.LogWarning("Cannot send PTT - not connected to radio");
             return false;
         }
 
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement PTT control
-        // 1. Build PTT control packet
-        // 2. Send to radio
-        // 3. Wait for acknowledgement
+        try
+        {
+            bool success = await _connection.SendPttAsync((uint)dmrId, press, 0, cancellationToken);
+            
+            if (success)
+            {
+                _logger.LogDebug("PTT command sent successfully");
+            }
 
-        await Task.Delay(50, cancellationToken); // Simulate command delay
-
-        _logger.LogDebug("PTT command sent successfully");
-        return true;
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending PTT command");
+            return false;
+        }
     }
 
     /// <inheritdoc/>
@@ -86,23 +148,26 @@ public class HyteraConnectionService : IRadioService
     {
         _logger.LogInformation("Requesting GPS position from radio {DmrId}", dmrId);
 
-        if (!_isConnected)
+        if (_connection == null || !_connection.IsConnected)
         {
             _logger.LogWarning("Cannot request GPS - not connected to radio");
             return null;
         }
 
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement GPS request
-        // 1. Build GPS request packet
-        // 2. Send to radio
-        // 3. Wait for GPS response packet
-        // 4. Parse coordinates from response
-
-        await Task.Delay(100, cancellationToken); // Simulate GPS request delay
-
-        _logger.LogDebug("GPS request completed");
-        return null; // Placeholder
+        try
+        {
+            await _connection.RequestGpsAsync((uint)dmrId, cancellationToken);
+            _logger.LogDebug("GPS request sent");
+            
+            // Note: Actual GPS response will come via PacketReceived event
+            // This is asynchronous - caller should listen to RadioEvent
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error requesting GPS position");
+            return null;
+        }
     }
 
     /// <inheritdoc/>
@@ -110,23 +175,28 @@ public class HyteraConnectionService : IRadioService
     {
         _logger.LogInformation("Sending text message to radio {DmrId}: {Message}", dmrId, message);
 
-        if (!_isConnected)
+        if (_connection == null || !_connection.IsConnected)
         {
             _logger.LogWarning("Cannot send text message - not connected to radio");
             return false;
         }
 
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement text messaging
-        // 1. Encode message in DMR format
-        // 2. Build text message packet(s)
-        // 3. Send to radio
-        // 4. Wait for acknowledgement
+        try
+        {
+            bool success = await _connection.SendTextMessageAsync((uint)dmrId, message, cancellationToken);
+            
+            if (success)
+            {
+                _logger.LogDebug("Text message sent successfully");
+            }
 
-        await Task.Delay(100, cancellationToken); // Simulate send delay
-
-        _logger.LogDebug("Text message sent successfully");
-        return true;
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending text message");
+            return false;
+        }
     }
 
     /// <inheritdoc/>
@@ -134,26 +204,147 @@ public class HyteraConnectionService : IRadioService
     {
         _logger.LogInformation("Getting status for radio {DmrId}", dmrId);
 
-        if (!_isConnected)
+        if (_connection == null || !_connection.IsConnected)
         {
             _logger.LogWarning("Cannot get status - not connected to radio");
             return null;
         }
 
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement status query
-        // 1. Build status request packet
-        // 2. Send to radio
-        // 3. Wait for status response
-        // 4. Parse status data
-
-        await Task.Delay(50, cancellationToken); // Simulate status query delay
-
+        // Return basic status based on connection state
+        await Task.CompletedTask;
+        
         return new RadioStatus
         {
             RadioDmrId = dmrId,
-            State = RadioState.Online,
+            State = _connection.IsConnected ? RadioState.Online : RadioState.Offline,
             LastSeen = DateTime.UtcNow
         };
+    }
+
+    /// <summary>
+    /// Handles received packets from the radio
+    /// </summary>
+    private void OnPacketReceived(object? sender, HyteraIPSCPacket packet)
+    {
+        _logger.LogDebug("Received packet: Command={Command}, Source={SourceId}, Dest={DestId}", 
+            packet.Command, packet.SourceId, packet.DestinationId);
+
+        RadioEvent? radioEvent = packet.Command switch
+        {
+            HyteraCommand.PTT_PRESS => new RadioEvent
+            {
+                EventType = RadioEventType.PttPressed,
+                RadioDmrId = (int)packet.SourceId
+            },
+            HyteraCommand.PTT_RELEASE => new RadioEvent
+            {
+                EventType = RadioEventType.PttReleased,
+                RadioDmrId = (int)packet.SourceId
+            },
+            HyteraCommand.CALL_START => new RadioEvent
+            {
+                EventType = RadioEventType.CallStart,
+                RadioDmrId = (int)packet.SourceId
+            },
+            HyteraCommand.CALL_END => new RadioEvent
+            {
+                EventType = RadioEventType.CallEnd,
+                RadioDmrId = (int)packet.SourceId
+            },
+            HyteraCommand.GPS_RESPONSE => ParseGpsResponse(packet),
+            HyteraCommand.TEXT_MESSAGE_RECEIVE => new RadioEvent
+            {
+                EventType = RadioEventType.TextMessage,
+                RadioDmrId = (int)packet.SourceId,
+                Data = Encoding.UTF8.GetString(packet.Payload)
+            },
+            HyteraCommand.EMERGENCY_DECLARE => new RadioEvent
+            {
+                EventType = RadioEventType.Emergency,
+                RadioDmrId = (int)packet.SourceId
+            },
+            _ => null
+        };
+
+        if (radioEvent != null)
+        {
+            RaiseRadioEvent(radioEvent);
+        }
+    }
+
+    /// <summary>
+    /// Parses GPS response packet
+    /// </summary>
+    private RadioEvent? ParseGpsResponse(HyteraIPSCPacket packet)
+    {
+        try
+        {
+            if (packet.Payload.Length < 16)
+            {
+                _logger.LogWarning("GPS response payload too small");
+                return null;
+            }
+
+            // Parse GPS data (simplified - actual format may vary)
+            double latitude = BitConverter.ToDouble(packet.Payload, 0);
+            double longitude = BitConverter.ToDouble(packet.Payload, 8);
+
+            var gpsPosition = new GpsPosition
+            {
+                RadioDmrId = (int)packet.SourceId,
+                Latitude = latitude,
+                Longitude = longitude,
+                Timestamp = DateTime.UtcNow
+            };
+
+            return new RadioEvent
+            {
+                EventType = RadioEventType.GpsPosition,
+                RadioDmrId = (int)packet.SourceId,
+                Data = JsonSerializer.Serialize(gpsPosition)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error parsing GPS response");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Handles connection lost event
+    /// </summary>
+    private void OnConnectionLost(object? sender, EventArgs e)
+    {
+        _logger.LogWarning("Connection to radio lost");
+        
+        RaiseRadioEvent(new RadioEvent
+        {
+            EventType = RadioEventType.Disconnected,
+            RadioDmrId = (int)_dispatcherId
+        });
+    }
+
+    /// <summary>
+    /// Raises a radio event
+    /// </summary>
+    private void RaiseRadioEvent(RadioEvent radioEvent)
+    {
+        try
+        {
+            RadioEvent?.Invoke(this, radioEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error raising radio event");
+        }
+    }
+
+    /// <summary>
+    /// Disposes the service
+    /// </summary>
+    public void Dispose()
+    {
+        DisconnectAsync().GetAwaiter().GetResult();
     }
 }

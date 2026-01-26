@@ -1,4 +1,4 @@
-namespace HyteraGateway.Radio.Protocol;
+namespace HyteraGateway.Radio.Protocol.DMR;
 
 /// <summary>
 /// DMR packet types
