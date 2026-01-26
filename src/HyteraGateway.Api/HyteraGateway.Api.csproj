@@ -8,7 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.23" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HyteraGateway.Core\HyteraGateway.Core.csproj" />
+    <ProjectReference Include="..\HyteraGateway.Radio\HyteraGateway.Radio.csproj" />
+    <ProjectReference Include="..\HyteraGateway.Data\HyteraGateway.Data.csproj" />
   </ItemGroup>
 
 </Project>
