@@ -8,6 +8,66 @@ namespace HyteraGateway.Radio.Configuration;
 [XmlRoot("RadioController")]
 public class RadioControllerConfig
 {
+    /// <summary>
+    /// IP address of the radio
+    /// </summary>
+    [XmlAttribute("RadioIpAddress")]
+    public string? RadioIpAddress { get; set; }
+    
+    /// <summary>
+    /// Port number for radio communication
+    /// </summary>
+    [XmlAttribute("RadioPort")]
+    public int RadioPort { get; set; } = 50000;
+    
+    /// <summary>
+    /// Dispatcher identifier
+    /// </summary>
+    [XmlAttribute("DispatcherId")]
+    public uint DispatcherId { get; set; }
+    
+    /// <summary>
+    /// PTT timeout in seconds
+    /// </summary>
+    [XmlAttribute("PttTimeoutSeconds")]
+    public int PttTimeoutSeconds { get; set; } = 180;
+    
+    /// <summary>
+    /// Indicates whether VoIP is enabled
+    /// </summary>
+    [XmlAttribute("VoipEnabled")]
+    public bool VoipEnabled { get; set; } = false;
+    
+    /// <summary>
+    /// Indicates whether VRS is enabled
+    /// </summary>
+    [XmlAttribute("VrsEnabled")]
+    public bool VrsEnabled { get; set; } = false;
+    
+    /// <summary>
+    /// Indicates whether activity check is enabled
+    /// </summary>
+    [XmlAttribute("ActivityCheckEnabled")]
+    public bool ActivityCheckEnabled { get; set; } = false;
+    
+    /// <summary>
+    /// Activity check interval in minutes
+    /// </summary>
+    [XmlAttribute("ActivityCheckMinutes")]
+    public int ActivityCheckMinutes { get; set; } = 60;
+    
+    /// <summary>
+    /// Indicates whether position check is enabled
+    /// </summary>
+    [XmlAttribute("PositionCheckEnabled")]
+    public bool PositionCheckEnabled { get; set; } = false;
+    
+    /// <summary>
+    /// Position check interval in minutes
+    /// </summary>
+    [XmlAttribute("PositionCheckMinutes")]
+    public int PositionCheckMinutes { get; set; } = 30;
+    
     [XmlArray("Radios")]
     [XmlArrayItem("Radio")]
     public List<RadioConfig> Radios { get; set; } = new();

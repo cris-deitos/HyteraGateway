@@ -18,6 +18,117 @@ public class RadioControllerConfigTests
     }
     
     [Fact]
+    public void RadioControllerConfig_DefaultRadioPort_Is50000()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.Equal(50000, config.RadioPort);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultPttTimeoutSeconds_Is180()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.Equal(180, config.PttTimeoutSeconds);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultVoipEnabled_IsFalse()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.False(config.VoipEnabled);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultVrsEnabled_IsFalse()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.False(config.VrsEnabled);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultActivityCheckEnabled_IsFalse()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.False(config.ActivityCheckEnabled);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultActivityCheckMinutes_Is60()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.Equal(60, config.ActivityCheckMinutes);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultPositionCheckEnabled_IsFalse()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.False(config.PositionCheckEnabled);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_DefaultPositionCheckMinutes_Is30()
+    {
+        // Arrange & Act
+        var config = new RadioControllerConfig();
+        
+        // Assert
+        Assert.Equal(30, config.PositionCheckMinutes);
+    }
+    
+    [Fact]
+    public void RadioControllerConfig_Properties_SetAndGetCorrectly()
+    {
+        // Arrange
+        var config = new RadioControllerConfig
+        {
+            RadioIpAddress = "192.168.1.50",
+            RadioPort = 50001,
+            DispatcherId = 12345,
+            PttTimeoutSeconds = 240,
+            VoipEnabled = true,
+            VrsEnabled = true,
+            ActivityCheckEnabled = true,
+            ActivityCheckMinutes = 45,
+            PositionCheckEnabled = true,
+            PositionCheckMinutes = 15
+        };
+        
+        // Assert
+        Assert.Equal("192.168.1.50", config.RadioIpAddress);
+        Assert.Equal(50001, config.RadioPort);
+        Assert.Equal((uint)12345, config.DispatcherId);
+        Assert.Equal(240, config.PttTimeoutSeconds);
+        Assert.True(config.VoipEnabled);
+        Assert.True(config.VrsEnabled);
+        Assert.True(config.ActivityCheckEnabled);
+        Assert.Equal(45, config.ActivityCheckMinutes);
+        Assert.True(config.PositionCheckEnabled);
+        Assert.Equal(15, config.PositionCheckMinutes);
+    }
+    
+    [Fact]
     public void RadioConfig_Properties_SetAndGetCorrectly()
     {
         // Arrange
@@ -107,6 +218,16 @@ public class RadioControllerConfigTests
         // Arrange
         var config = new RadioControllerConfig
         {
+            RadioIpAddress = "192.168.1.50",
+            RadioPort = 50002,
+            DispatcherId = 99999,
+            PttTimeoutSeconds = 300,
+            VoipEnabled = true,
+            VrsEnabled = true,
+            ActivityCheckEnabled = true,
+            ActivityCheckMinutes = 90,
+            PositionCheckEnabled = true,
+            PositionCheckMinutes = 20,
             Radios = new List<RadioConfig>
             {
                 new RadioConfig
@@ -157,7 +278,18 @@ public class RadioControllerConfigTests
             RadioControllerConfigLoader.Save(config, tempFile);
             var loaded = RadioControllerConfigLoader.Load(tempFile);
             
-            // Assert
+            // Assert - Root properties
+            Assert.Equal("192.168.1.50", loaded.RadioIpAddress);
+            Assert.Equal(50002, loaded.RadioPort);
+            Assert.Equal((uint)99999, loaded.DispatcherId);
+            Assert.Equal(300, loaded.PttTimeoutSeconds);
+            Assert.True(loaded.VoipEnabled);
+            Assert.True(loaded.VrsEnabled);
+            Assert.True(loaded.ActivityCheckEnabled);
+            Assert.Equal(90, loaded.ActivityCheckMinutes);
+            Assert.True(loaded.PositionCheckEnabled);
+            Assert.Equal(20, loaded.PositionCheckMinutes);
+            
             Assert.Equal(2, loaded.Radios.Count);
             Assert.Equal(2, loaded.Slots.Count);
             
