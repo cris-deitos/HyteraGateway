@@ -1,4 +1,7 @@
 using HyteraGateway.Api.Hubs;
+using HyteraGateway.Audio.Codecs.Ambe;
+using HyteraGateway.Audio.Services;
+using HyteraGateway.Audio.Streaming;
 using HyteraGateway.Core.Configuration;
 using HyteraGateway.Core.Interfaces;
 using HyteraGateway.Data.Repositories;
@@ -56,6 +59,11 @@ builder.Services.AddSingleton<IRadioService, HyteraConnectionService>();
 builder.Services.AddScoped<TransmissionRepository>();
 builder.Services.AddScoped<PositionRepository>();
 
+// Register audio services
+builder.Services.AddSingleton<IAmbeCodec, MbelibAmbeCodec>();
+builder.Services.AddSingleton<AudioStreamManager>();
+builder.Services.AddSingleton<AudioCaptureService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -74,7 +82,8 @@ app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 
-// Map SignalR hub
+// Map SignalR hubs
 app.MapHub<RadioEventsHub>("/hubs/radio-events");
+app.MapHub<AudioHub>("/hubs/audio");
 
 app.Run();

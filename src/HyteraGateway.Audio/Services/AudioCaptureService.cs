@@ -1,39 +1,68 @@
-using HyteraGateway.Core.Interfaces;
+using HyteraGateway.Audio.Codecs.Ambe;
+using HyteraGateway.Audio.Processing;
+using HyteraGateway.Audio.Streaming;
+using Microsoft.Extensions.Logging;
 
 namespace HyteraGateway.Audio.Services;
 
 /// <summary>
-/// Service for capturing audio from Hytera radios
+/// Captures AMBE voice frames from radio and processes them
 /// </summary>
 public class AudioCaptureService
 {
-    private bool _isCapturing;
-
-    /// <summary>
-    /// Starts capturing audio from the radio
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    public async Task StartCaptureAsync(CancellationToken cancellationToken = default)
+    private readonly IAmbeCodec _ambeCodec;
+    private readonly AudioStreamManager _streamManager;
+    private readonly ILogger<AudioCaptureService> _logger;
+    
+    public event EventHandler<AudioPacket>? AudioPacketReady;
+    
+    public AudioCaptureService(
+        IAmbeCodec ambeCodec,
+        AudioStreamManager streamManager,
+        ILogger<AudioCaptureService> logger)
     {
-        // TODO: Reverse-engineer from HyteraProtocol.dll
-        // Implement audio capture
-        // 1. Open audio stream from radio (typically UDP port 50001)
-        // 2. Start receiving AMBE+2 audio packets
-        // 3. Decode and/or record audio
-        // 4. Raise audio events
-
-        await Task.Delay(100, cancellationToken); // Placeholder
-        _isCapturing = true;
+        _ambeCodec = ambeCodec;
+        _streamManager = streamManager;
+        _logger = logger;
     }
-
+    
     /// <summary>
-    /// Stops capturing audio
+    /// Process incoming AMBE voice frame from radio
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    public async Task StopCaptureAsync(CancellationToken cancellationToken = default)
+    public async Task ProcessVoiceFrameAsync(byte[] ambeFrame, int radioId, int talkGroupId)
     {
-        // TODO: Implement audio capture stop logic
-        await Task.Delay(100, cancellationToken); // Placeholder
-        _isCapturing = false;
+        try
+        {
+            // Decode AMBE to PCM @ 8kHz
+            byte[] pcm8kHz = _ambeCodec.DecodeToPcm(ambeFrame);
+            
+            // Resample to 48kHz for web streaming
+            byte[] pcm48kHz = AudioPipeline.Resample(pcm8kHz, 48000);
+            
+            // Apply AGC
+            pcm48kHz = AudioPipeline.ApplyAgc(pcm48kHz);
+            
+            // Encode to Opus
+            byte[] opusData = _streamManager.EncodePcmToOpus(pcm48kHz);
+            
+            // Create packet
+            var packet = new AudioPacket
+            {
+                Timestamp = (uint)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                Data = opusData,
+                Codec = AudioCodec.Opus
+            };
+            
+            // Raise event for broadcasting
+            AudioPacketReady?.Invoke(this, packet);
+            
+            _logger.LogTrace("Processed voice frame: {AmbeSize}B → {OpusSize}B", ambeFrame.Length, opusData.Length);
+            
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process voice frame");
+        }
     }
 }
