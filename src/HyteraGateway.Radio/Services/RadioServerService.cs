@@ -106,26 +106,33 @@ public class RadioServerService : IDisposable
     
     private async Task ProcessClientPacketAsync(ConnectedClient client, RadioServerPacket packet, CancellationToken ct)
     {
-        switch ((RadioServerProtocol.ServerCommand)packet.Command)
+        try
         {
-            case RadioServerProtocol.ServerCommand.CLIENT_REGISTER:
-                client.ClientId = packet.ClientId;
-                await SendAckAsync(client, packet.Sequence);
-                break;
-            
-            case RadioServerProtocol.ServerCommand.SEND_PTT:
-                // Parse: [4B TalkGroupId][1B Press]
-                var tgId = BitConverter.ToUInt32(packet.Payload, 0);
-                var press = packet.Payload[4] == 1;
-                await _radioService.SendPttAsync((int)tgId, press, ct);
-                break;
-            
-            case RadioServerProtocol.ServerCommand.SEND_GPS_REQUEST:
-                var radioId = BitConverter.ToInt32(packet.Payload, 0);
-                await _radioService.RequestGpsAsync(radioId);
-                break;
-            
-            // Additional commands can be handled here...
+            switch ((RadioServerProtocol.ServerCommand)packet.Command)
+            {
+                case RadioServerProtocol.ServerCommand.CLIENT_REGISTER:
+                    client.ClientId = packet.ClientId;
+                    await SendAckAsync(client, packet.Sequence);
+                    break;
+                
+                case RadioServerProtocol.ServerCommand.SEND_PTT:
+                    // Parse: [4B TalkGroupId][1B Press]
+                    var tgId = BitConverter.ToUInt32(packet.Payload, 0);
+                    var press = packet.Payload[4] == 1;
+                    await _radioService.SendPttAsync((int)tgId, press, ct);
+                    break;
+                
+                case RadioServerProtocol.ServerCommand.SEND_GPS_REQUEST:
+                    var radioId = BitConverter.ToInt32(packet.Payload, 0);
+                    await _radioService.RequestGpsAsync(radioId, ct);
+                    break;
+                
+                // Additional commands can be handled here...
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing client packet");
         }
     }
     

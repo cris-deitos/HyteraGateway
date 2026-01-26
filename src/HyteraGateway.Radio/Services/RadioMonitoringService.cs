@@ -115,8 +115,19 @@ public class RadioMonitoringService : IDisposable
     
     public void Dispose()
     {
-        StopAsync().GetAwaiter().GetResult();
-        _cts?.Dispose();
+        try
+        {
+            // Use Task.Run to avoid potential deadlock issues
+            Task.Run(async () => await StopAsync()).Wait(TimeSpan.FromSeconds(5));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error disposing RadioMonitoringService");
+        }
+        finally
+        {
+            _cts?.Dispose();
+        }
     }
 }
 

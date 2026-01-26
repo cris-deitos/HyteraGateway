@@ -51,25 +51,32 @@ public class PttTimeoutService
     
     private async void CheckTimeouts(object? state)
     {
-        var now = DateTime.UtcNow;
-        var timedOut = _activeSessions
-            .Where(kvp => now - kvp.Value.StartTime > _timeout)
-            .ToList();
-        
-        foreach (var (key, session) in timedOut)
+        try
         {
-            _logger.LogWarning("PTT timeout reached: TG={TalkGroup}, Slot={Slot}, Duration={Duration:mm\\:ss}. Auto-releasing PTT.",
-                session.DestinationId, session.Slot, now - session.StartTime);
+            var now = DateTime.UtcNow;
+            var timedOut = _activeSessions
+                .Where(kvp => now - kvp.Value.StartTime > _timeout)
+                .ToList();
             
-            try
+            foreach (var (key, session) in timedOut)
             {
-                await _radioService.SendPttAsync((int)session.DestinationId, false);
-                _activeSessions.Remove(key);
+                _logger.LogWarning("PTT timeout reached: TG={TalkGroup}, Slot={Slot}, Duration={Duration:mm\\:ss}. Auto-releasing PTT.",
+                    session.DestinationId, session.Slot, now - session.StartTime);
+                
+                try
+                {
+                    await _radioService.SendPttAsync((int)session.DestinationId, false, CancellationToken.None);
+                    _activeSessions.Remove(key);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to auto-release PTT");
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to auto-release PTT");
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception in PTT timeout check");
         }
     }
     

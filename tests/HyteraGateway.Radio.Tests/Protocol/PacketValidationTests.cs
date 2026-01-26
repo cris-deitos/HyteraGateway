@@ -51,7 +51,9 @@ public class PacketValidationTests
         byte[]? bytes = null;
         
         // Act
-        var isValid = HyteraIPSCPacket.IsValidPacket(bytes!);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
+        var isValid = HyteraIPSCPacket.IsValidPacket(bytes);
+#pragma warning restore CS8625
         
         // Assert
         Assert.False(isValid);
