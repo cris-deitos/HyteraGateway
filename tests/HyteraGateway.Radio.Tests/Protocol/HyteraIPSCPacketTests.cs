@@ -71,8 +71,8 @@ public class HyteraIPSCPacketTests
         invalidData[1] = 0xFF;
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => HyteraIPSCPacket.FromBytes(invalidData));
-        Assert.Contains("Invalid signature", exception.Message);
+        var exception = Assert.Throws<InvalidDataException>(() => HyteraIPSCPacket.FromBytes(invalidData));
+        Assert.Contains("Invalid packet", exception.Message);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class HyteraIPSCPacketTests
         byte[] tooSmall = new byte[] { 0x50, 0x48, 0x01 };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => HyteraIPSCPacket.FromBytes(tooSmall));
+        Assert.Throws<InvalidDataException>(() => HyteraIPSCPacket.FromBytes(tooSmall));
     }
 
     [Fact]
