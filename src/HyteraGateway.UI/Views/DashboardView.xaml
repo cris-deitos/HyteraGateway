@@ -1,0 +1,86 @@
+<UserControl x:Class="HyteraGateway.UI.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16">
+            <!-- Status Cards -->
+            <TextBlock Text="System Status" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Margin="0,0,0,16"/>
+            
+            <UniformGrid Rows="1" Columns="4">
+                <materialDesign:Card Margin="8" Padding="16">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Server" Width="48" Height="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Service" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding ServiceStatus}" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card Margin="8" Padding="16">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Radio" Width="48" Height="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Active Radios" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding ActiveRadios}" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card Margin="8" Padding="16">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Phone" Width="48" Height="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Calls Today" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding CallsToday}" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card Margin="8" Padding="16">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Microphone" Width="48" Height="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Recordings" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding RecordingsSize}" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </UniformGrid>
+
+            <!-- Radio List -->
+            <TextBlock Text="Active Radios" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Margin="0,24,0,16"/>
+            
+            <materialDesign:Card>
+                <DataGrid ItemsSource="{Binding Radios}" AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="DMR ID" Binding="{Binding DmrId}"/>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}"/>
+                        <DataGridTextColumn Header="Signal" Binding="{Binding SignalStrength}"/>
+                        <DataGridTextColumn Header="Last Activity" Binding="{Binding LastActivity}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </materialDesign:Card>
+
+            <!-- Connection Status -->
+            <TextBlock Text="Connections" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Margin="0,24,0,16"/>
+            
+            <UniformGrid Rows="1" Columns="2">
+                <materialDesign:Card Margin="8" Padding="16">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Database" Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <StackPanel>
+                            <TextBlock Text="Database" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding DatabaseStatus}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card Margin="8" Padding="16">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CloudUpload" Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <StackPanel>
+                            <TextBlock Text="FTP Server" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding FtpStatus}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </materialDesign:Card>
+            </UniformGrid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
