@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 
@@ -258,8 +259,8 @@ public class HyteraConnection : IDisposable
             return null;
         }
 
-        // Parse length from header (at offset 6)
-        ushort length = BitConverter.ToUInt16(header, 6);
+        // Parse length from header (at offset 6) - little-endian
+        ushort length = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(6, 2));
         
         // Read full packet
         byte[] fullPacket = new byte[length];

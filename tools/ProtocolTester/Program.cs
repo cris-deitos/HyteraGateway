@@ -5,6 +5,9 @@ namespace ProtocolTester;
 
 class Program
 {
+    // Configuration constants
+    private const int DefaultPttHoldDurationMs = 2000;
+    
     static async Task<int> Main(string[] args)
     {
         // Parse command line arguments
@@ -130,7 +133,7 @@ class Program
             logger.LogInformation("Pressing PTT for talkgroup {TargetId}...", options.TargetId);
             await connection.SendPttAsync(options.TargetId, press: true, slot: 0);
             
-            await Task.Delay(3000); // Hold for 3 seconds
+            await Task.Delay(DefaultPttHoldDurationMs); // Hold for configured duration
             
             // Release PTT
             logger.LogInformation("Releasing PTT...");
@@ -255,7 +258,7 @@ class Program
                         }
                         uint pttTarget = uint.Parse(parts[1]);
                         await connection.SendPttAsync(pttTarget, true);
-                        await Task.Delay(2000);
+                        await Task.Delay(DefaultPttHoldDurationMs);
                         await connection.SendPttAsync(pttTarget, false);
                         logger.LogInformation("PTT sent to {Target}", pttTarget);
                         break;
