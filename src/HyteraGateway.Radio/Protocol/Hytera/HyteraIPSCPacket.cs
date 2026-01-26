@@ -117,8 +117,9 @@ public class HyteraIPSCPacket
     /// <returns>Raw packet bytes</returns>
     public byte[] ToBytes()
     {
-        ushort length = (ushort)(19 + Payload.Length); // Header + payload + CRC
-        byte[] buffer = new byte[length];
+        // Calculate total length: Header (19 bytes) + Payload + CRC (2 bytes)
+        int totalLength = 19 + Payload.Length + 2;
+        byte[] buffer = new byte[totalLength];
         int offset = 0;
 
         // Signature "PH" (2 bytes, big-endian)
@@ -129,8 +130,8 @@ public class HyteraIPSCPacket
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), Sequence);
         offset += 4;
 
-        // Length (2 bytes, little-endian)
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), length);
+        // Length (2 bytes, little-endian) - this is the total packet length
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), (ushort)totalLength);
         offset += 2;
 
         // Command (2 bytes, little-endian)
