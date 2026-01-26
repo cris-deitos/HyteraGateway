@@ -39,6 +39,16 @@ public class HyteraConnection : IDisposable
     public event EventHandler? ConnectionLost;
 
     /// <summary>
+    /// Event raised when reconnection is attempted
+    /// </summary>
+    public event EventHandler<ReconnectEventArgs>? Reconnecting;
+
+    /// <summary>
+    /// Event raised when all reconnection attempts have failed
+    /// </summary>
+    public event EventHandler? ReconnectFailed;
+
+    /// <summary>
     /// Gets whether the connection is currently active
     /// </summary>
     public bool IsConnected => _tcpClient?.Connected ?? false;
@@ -404,18 +414,26 @@ public class HyteraConnection : IDisposable
 
     /// <summary>
     /// Attempts to reconnect with exponential backoff
+    /// Backoff sequence: 1s, 2s, 5s, 10s, 30s, 60s, 120s, 300s, 600s, 900s
     /// </summary>
     private async Task ReconnectAsync()
     {
+        // Exponential backoff delays in seconds
+        // Can be made configurable via RadioConfig if needed
+        int[] backoffDelays = { 1, 2, 5, 10, 30, 60, 120, 300, 600, 900 };
+
         while (_reconnectAttempts < MAX_RECONNECT_ATTEMPTS && _shouldReconnect)
         {
             _reconnectAttempts++;
             
-            // Exponential backoff: 2^attempts seconds (max 300s)
-            int delaySeconds = Math.Min((int)Math.Pow(2, _reconnectAttempts), 300);
+            // Get delay from backoff sequence
+            int delaySeconds = backoffDelays[Math.Min(_reconnectAttempts - 1, backoffDelays.Length - 1)];
             
             _logger?.LogInformation("Reconnection attempt {Attempt}/{Max} in {Delay} seconds", 
                 _reconnectAttempts, MAX_RECONNECT_ATTEMPTS, delaySeconds);
+            
+            // Raise Reconnecting event
+            Reconnecting?.Invoke(this, new ReconnectEventArgs(_reconnectAttempts, delaySeconds));
             
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
             
@@ -439,6 +457,7 @@ public class HyteraConnection : IDisposable
         }
         
         _logger?.LogError("Max reconnection attempts reached. Giving up.");
+        ReconnectFailed?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -449,5 +468,27 @@ public class HyteraConnection : IDisposable
         DisconnectAsync().GetAwaiter().GetResult();
         _receiveCts?.Dispose();
         _keepaliveTimer?.Dispose();
+    }
+}
+
+/// <summary>
+/// Event args for reconnection attempts
+/// </summary>
+public class ReconnectEventArgs : EventArgs
+{
+    /// <summary>
+    /// Attempt number (1-based)
+    /// </summary>
+    public int Attempt { get; }
+
+    /// <summary>
+    /// Delay in seconds before reconnection attempt
+    /// </summary>
+    public int DelaySeconds { get; }
+
+    public ReconnectEventArgs(int attempt, int delaySeconds)
+    {
+        Attempt = attempt;
+        DelaySeconds = delaySeconds;
     }
 }

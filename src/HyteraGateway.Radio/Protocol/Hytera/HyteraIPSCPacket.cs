@@ -205,7 +205,7 @@ public class HyteraIPSCPacket
     /// <summary>
     /// Calculate CRC-CCITT checksum
     /// </summary>
-    private static ushort CalculateCrc(byte[] data, int offset, int length)
+    public static ushort CalculateCrc(byte[] data, int offset, int length)
     {
         const ushort polynomial = 0x1021;
         ushort crc = 0xFFFF;
