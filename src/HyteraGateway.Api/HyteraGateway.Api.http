@@ -1,0 +1,6 @@
+@HyteraGateway.Api_HostAddress = http://localhost:5244
+
+GET {{HyteraGateway.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
