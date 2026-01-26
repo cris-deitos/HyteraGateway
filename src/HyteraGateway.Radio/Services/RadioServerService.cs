@@ -88,8 +88,16 @@ public class RadioServerService : IDisposable
                 if (bytesRead == 0)
                     break;
                 
-                var packet = RadioServerPacket.FromBytes(buffer[..bytesRead]);
-                await ProcessClientPacketAsync(client, packet, cancellationToken);
+                try
+                {
+                    var packet = RadioServerPacket.FromBytes(buffer[..bytesRead]);
+                    await ProcessClientPacketAsync(client, packet, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse or process client packet");
+                    // Continue listening for more packets
+                }
             }
         }
         catch (Exception ex)
@@ -112,7 +120,7 @@ public class RadioServerService : IDisposable
             {
                 case RadioServerProtocol.ServerCommand.CLIENT_REGISTER:
                     client.ClientId = packet.ClientId;
-                    await SendAckAsync(client, packet.Sequence);
+                    await SendAckAsync(client, packet.Sequence, ct);
                     break;
                 
                 case RadioServerProtocol.ServerCommand.SEND_PTT:
@@ -136,7 +144,7 @@ public class RadioServerService : IDisposable
         }
     }
     
-    private async Task SendAckAsync(ConnectedClient client, ushort sequence)
+    private async Task SendAckAsync(ConnectedClient client, ushort sequence, CancellationToken ct = default)
     {
         var ack = new RadioServerPacket
         {
@@ -146,7 +154,7 @@ public class RadioServerService : IDisposable
         };
         
         var stream = client.TcpClient.GetStream();
-        await stream.WriteAsync(ack.ToBytes());
+        await stream.WriteAsync(ack.ToBytes(), ct);
     }
     
     public void Dispose()
