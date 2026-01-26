@@ -49,13 +49,51 @@ public class HyteraIPSCPacket
     public ushort Crc { get; set; }
 
     /// <summary>
+    /// Validates a packet without parsing it
+    /// </summary>
+    /// <param name="data">Raw packet bytes</param>
+    /// <returns>True if packet is valid</returns>
+    public static bool IsValidPacket(byte[] data)
+    {
+        if (data == null || data.Length < 8)
+            return false;
+        
+        // Validate signature "PH" (0x50 0x48)
+        if (data[0] != 0x50 || data[1] != 0x48)
+            return false;
+        
+        // Validate length field matches actual data length
+        ushort declaredLength = BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(6, 2));
+        if (declaredLength != data.Length)
+            return false;
+        
+        // Validate CRC if packet is long enough
+        if (data.Length >= 21) // Minimum packet with CRC
+        {
+            // Extract CRC from last 2 bytes
+            ushort declaredCrc = BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(data.Length - 2, 2));
+            ushort calculatedCrc = CalculateCrc(data, 0, data.Length - 2);
+            
+            if (declaredCrc != calculatedCrc)
+                return false;
+        }
+        
+        return true;
+    }
+
+    /// <summary>
     /// Parse raw bytes into a HyteraIPSCPacket
     /// </summary>
     /// <param name="data">Raw packet bytes</param>
     /// <returns>Parsed packet</returns>
-    /// <exception cref="ArgumentException">Thrown if packet is invalid</exception>
+    /// <exception cref="InvalidDataException">Thrown if packet is invalid</exception>
     public static HyteraIPSCPacket FromBytes(byte[] data)
     {
+        if (!IsValidPacket(data))
+        {
+            throw new InvalidDataException("Invalid packet: signature, length, or CRC mismatch");
+        }
+
         if (data.Length < 19)
         {
             throw new ArgumentException("Packet too small", nameof(data));

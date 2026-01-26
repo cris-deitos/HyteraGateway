@@ -21,6 +21,12 @@ public class HyteraConnection : IDisposable
     private uint _sequenceNumber;
     private DateTime _lastKeepalive = DateTime.UtcNow;
     private Timer? _keepaliveTimer;
+    
+    // Auto-reconnection fields
+    private int _reconnectAttempts = 0;
+    private const int MAX_RECONNECT_ATTEMPTS = 10;
+    private bool _shouldReconnect = true;
+    private Task? _reconnectTask;
 
     /// <summary>
     /// Event raised when a packet is received
@@ -36,6 +42,11 @@ public class HyteraConnection : IDisposable
     /// Gets whether the connection is currently active
     /// </summary>
     public bool IsConnected => _tcpClient?.Connected ?? false;
+
+    /// <summary>
+    /// Gets or sets whether auto-reconnection is enabled
+    /// </summary>
+    public bool AutoReconnect { get; set; } = true;
 
     /// <summary>
     /// Initializes a new Hytera connection
@@ -92,6 +103,10 @@ public class HyteraConnection : IDisposable
                     // Start keepalive timer (every 10 seconds)
                     _keepaliveTimer = new Timer(SendKeepalive, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
 
+                    // Reset reconnect attempts on successful connection
+                    _reconnectAttempts = 0;
+                    _shouldReconnect = true;
+
                     return true;
                 }
                 else
@@ -115,8 +130,10 @@ public class HyteraConnection : IDisposable
     /// <summary>
     /// Disconnects from the radio
     /// </summary>
-    public async Task DisconnectAsync()
+    /// <param name="sendDisconnectPacket">Whether to send disconnect packet to radio</param>
+    public async Task DisconnectAsync(bool sendDisconnectPacket = true)
     {
+        _shouldReconnect = false; // Prevent auto-reconnect on manual disconnect
         _logger?.LogInformation("Disconnecting from radio");
 
         // Stop keepalive timer
@@ -138,7 +155,7 @@ public class HyteraConnection : IDisposable
         }
 
         // Send disconnect packet
-        if (IsConnected)
+        if (sendDisconnectPacket && IsConnected)
         {
             try
             {
@@ -322,14 +339,14 @@ public class HyteraConnection : IDisposable
                         {
                             // Connection lost
                             _logger?.LogWarning("Connection lost - no data received");
-                            ConnectionLost?.Invoke(this, EventArgs.Empty);
+                            OnConnectionLost();
                             break;
                         }
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
                         _logger?.LogError(ex, "Error in receive loop");
-                        ConnectionLost?.Invoke(this, EventArgs.Empty);
+                        OnConnectionLost();
                         break;
                     }
                 }
@@ -361,14 +378,67 @@ public class HyteraConnection : IDisposable
             if ((DateTime.UtcNow - _lastKeepalive).TotalSeconds > 30)
             {
                 _logger?.LogWarning("Keepalive timeout - no response for 30 seconds");
-                ConnectionLost?.Invoke(this, EventArgs.Empty);
-                await DisconnectAsync();
+                OnConnectionLost();
+                await DisconnectAsync(sendDisconnectPacket: false);
             }
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to send keepalive");
         }
+    }
+
+    /// <summary>
+    /// Handles connection lost event
+    /// </summary>
+    private void OnConnectionLost()
+    {
+        _logger?.LogWarning("Connection lost detected");
+        ConnectionLost?.Invoke(this, EventArgs.Empty);
+        
+        if (AutoReconnect && _shouldReconnect)
+        {
+            _reconnectTask = ReconnectAsync();
+        }
+    }
+
+    /// <summary>
+    /// Attempts to reconnect with exponential backoff
+    /// </summary>
+    private async Task ReconnectAsync()
+    {
+        while (_reconnectAttempts < MAX_RECONNECT_ATTEMPTS && _shouldReconnect)
+        {
+            _reconnectAttempts++;
+            
+            // Exponential backoff: 2^attempts seconds (max 300s)
+            int delaySeconds = Math.Min((int)Math.Pow(2, _reconnectAttempts), 300);
+            
+            _logger?.LogInformation("Reconnection attempt {Attempt}/{Max} in {Delay} seconds", 
+                _reconnectAttempts, MAX_RECONNECT_ATTEMPTS, delaySeconds);
+            
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+            
+            try
+            {
+                // Clean up existing connection
+                await DisconnectAsync(sendDisconnectPacket: false);
+                
+                // Attempt reconnection
+                if (await ConnectAsync())
+                {
+                    _logger?.LogInformation("Reconnection successful after {Attempts} attempts", _reconnectAttempts);
+                    _reconnectAttempts = 0;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Reconnection attempt {Attempt} failed", _reconnectAttempts);
+            }
+        }
+        
+        _logger?.LogError("Max reconnection attempts reached. Giving up.");
     }
 
     /// <summary>
