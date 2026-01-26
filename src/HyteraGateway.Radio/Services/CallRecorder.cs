@@ -196,7 +196,12 @@ public class CallRecorder : IDisposable
             {
                 using var writer = new WaveFileWriter(filePath, waveFormat);
                 
-                // Write silence as placeholder (in production, decode AMBE frames to PCM here)
+                // TODO: AMBE to PCM conversion required here
+                // This is a placeholder implementation that writes silence
+                // For production use, integrate an AMBE+2 vocoder library (e.g., mbelib, md380tools)
+                // to decode AMBE frames to PCM audio data
+                
+                // Write silence as placeholder
                 var silenceBuffer = new byte[sampleCount * 2]; // 16-bit = 2 bytes per sample
                 writer.Write(silenceBuffer, 0, silenceBuffer.Length);
                 

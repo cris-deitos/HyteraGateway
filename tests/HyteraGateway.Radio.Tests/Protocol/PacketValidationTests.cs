@@ -48,12 +48,10 @@ public class PacketValidationTests
     public void IsValidPacket_NullData_ReturnsFalse()
     {
         // Arrange
-        byte[]? bytes = null;
+        byte[] bytes = null!;
         
         // Act
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         var isValid = HyteraIPSCPacket.IsValidPacket(bytes);
-#pragma warning restore CS8625
         
         // Assert
         Assert.False(isValid);
@@ -121,12 +119,10 @@ public class PacketValidationTests
     public void Validator_NullData_ReturnsError()
     {
         // Arrange
-        byte[]? bytes = null;
+        byte[] bytes = null!;
         
         // Act
-#pragma warning disable CS8625
         var result = HyteraPacketValidator.Validate(bytes);
-#pragma warning restore CS8625
         
         // Assert
         Assert.Equal(ValidationSeverity.Error, result.Severity);

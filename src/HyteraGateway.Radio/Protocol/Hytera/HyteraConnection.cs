@@ -418,7 +418,8 @@ public class HyteraConnection : IDisposable
     /// </summary>
     private async Task ReconnectAsync()
     {
-        // Backoff delays in seconds
+        // Exponential backoff delays in seconds
+        // Can be made configurable via RadioConfig if needed
         int[] backoffDelays = { 1, 2, 5, 10, 30, 60, 120, 300, 600, 900 };
 
         while (_reconnectAttempts < MAX_RECONNECT_ATTEMPTS && _shouldReconnect)
