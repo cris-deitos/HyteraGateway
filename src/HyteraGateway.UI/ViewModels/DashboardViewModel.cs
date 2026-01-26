@@ -38,7 +38,14 @@ public partial class DashboardViewModel : ObservableObject
         _signalR = signalR;
         _api = api;
         
-        _ = InitializeAsync();
+        // Initialize asynchronously with proper error handling
+        InitializeAsync().ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                System.Diagnostics.Debug.WriteLine($"DashboardViewModel initialization failed: {task.Exception?.GetBaseException().Message}");
+            }
+        }, TaskScheduler.Default);
     }
 
     private async Task InitializeAsync()

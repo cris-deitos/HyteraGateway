@@ -33,9 +33,10 @@ public class SignalRService
         {
             await _hubConnection.StartAsync();
         }
-        catch
+        catch (System.Net.Http.HttpRequestException ex)
         {
-            // Silently fail if server is not available
+            // Server is not available - continue without SignalR
+            System.Diagnostics.Debug.WriteLine($"Failed to connect to SignalR hub: {ex.Message}");
         }
     }
 

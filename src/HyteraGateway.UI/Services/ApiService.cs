@@ -23,8 +23,9 @@ public class ApiService
         {
             return await _httpClient.GetFromJsonAsync<T>(endpoint);
         }
-        catch
+        catch (System.Net.Http.HttpRequestException ex)
         {
+            System.Diagnostics.Debug.WriteLine($"HTTP GET failed for {endpoint}: {ex.Message}");
             return default;
         }
     }
@@ -35,9 +36,9 @@ public class ApiService
         {
             await _httpClient.PostAsJsonAsync(endpoint, data);
         }
-        catch
+        catch (System.Net.Http.HttpRequestException ex)
         {
-            // Silently fail if server is not available
+            System.Diagnostics.Debug.WriteLine($"HTTP POST failed for {endpoint}: {ex.Message}");
         }
     }
 }

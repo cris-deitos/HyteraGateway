@@ -38,9 +38,10 @@ public partial class MainWindow : Window
                 WindowState = WindowState.Normal;
             };
         }
-        catch
+        catch (System.IO.FileNotFoundException)
         {
             // Icon file not found, system tray icon will not be available
+            System.Diagnostics.Debug.WriteLine("Icon file not found - system tray icon unavailable");
         }
     }
 
