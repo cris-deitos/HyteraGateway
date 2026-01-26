@@ -41,7 +41,12 @@ internal static class MbelibNative
 /// </summary>
 internal class MbeParamsHandle : SafeHandle
 {
-    private const int MBE_PARMS_SIZE = 256; // Adjust based on mbelib struct size
+    // NOTE: This size is conservative and larger than the actual mbe_parms structure.
+    // The actual mbe_parms structure in mbelib is approximately 125-130 bytes, but we
+    // allocate extra space to ensure compatibility across different mbelib versions.
+    // If you experience crashes or memory corruption, you may need to verify the
+    // exact structure size from your mbelib build using sizeof(mbe_parms).
+    private const int MBE_PARMS_SIZE = 256; 
     
     public MbeParamsHandle() : base(IntPtr.Zero, true)
     {

@@ -8,6 +8,8 @@ namespace HyteraGateway.Audio.Processing;
 /// </summary>
 public class AudioPipeline
 {
+    private const int WAV_HEADER_SIZE = 44; // Standard WAV file header size in bytes
+    
     /// <summary>
     /// Resample PCM from 8kHz to target sample rate
     /// </summary>
@@ -28,8 +30,8 @@ public class AudioPipeline
         WaveFileWriter.WriteWavFileToStream(outputStream, resampler.ToWaveProvider16());
         
         // Extract PCM data (skip WAV header)
-        outputStream.Position = 44; // WAV header is 44 bytes
-        return outputStream.ToArray()[44..];
+        outputStream.Position = WAV_HEADER_SIZE;
+        return outputStream.ToArray()[WAV_HEADER_SIZE..];
     }
     
     /// <summary>

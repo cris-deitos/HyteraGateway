@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using HyteraGateway.Audio.Streaming;
 using HyteraGateway.Audio.Processing;
+using System.Collections.Concurrent;
 
 namespace HyteraGateway.Api.Hubs;
 
@@ -11,7 +12,7 @@ public class AudioHub : Hub
 {
     private readonly ILogger<AudioHub> _logger;
     private readonly AudioStreamManager _streamManager;
-    private static readonly Dictionary<string, AudioSubscription> _subscriptions = new();
+    private static readonly ConcurrentDictionary<string, AudioSubscription> _subscriptions = new();
     
     public AudioHub(ILogger<AudioHub> logger, AudioStreamManager streamManager)
     {
@@ -44,11 +45,10 @@ public class AudioHub : Hub
     /// </summary>
     public async Task UnsubscribeFromAudio()
     {
-        if (_subscriptions.TryGetValue(Context.ConnectionId, out var subscription))
+        if (_subscriptions.TryRemove(Context.ConnectionId, out var subscription))
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, 
                 GetGroupName(subscription.RadioId, subscription.TalkGroupId));
-            _subscriptions.Remove(Context.ConnectionId);
         }
     }
     
@@ -110,7 +110,7 @@ public class AudioHub : Hub
     
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        _subscriptions.Remove(Context.ConnectionId);
+        _subscriptions.TryRemove(Context.ConnectionId, out _);
         await base.OnDisconnectedAsync(exception);
     }
 }

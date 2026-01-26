@@ -108,8 +108,10 @@ public class MbelibAmbeCodec : IAmbeCodec, IDisposable
         // [3-9]: AMBE data (49 bits = 7 bytes, but packed differently)
         // [10-32]: FEC, additional data
         
-        // TODO: Reverse engineer exact Hytera AMBE frame structure
-        // For now, extract middle 7 bytes as AMBE data
+        // NOTE: The exact Hytera AMBE frame structure needs verification with real packets
+        // This is a placeholder implementation that extracts middle 7 bytes as AMBE data
+        // For production use, the frame structure must be reverse-engineered from actual
+        // Hytera radio transmissions or obtained from official documentation
         byte[] ambeData = new byte[7];
         Array.Copy(hyteraFrame, 3, ambeData, 0, 7);
         return ambeData;
