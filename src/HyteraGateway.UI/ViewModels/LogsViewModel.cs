@@ -12,27 +12,52 @@ using Microsoft.Win32;
 
 namespace HyteraGateway.UI.ViewModels;
 
+/// <summary>
+/// ViewModel for the Logs view, providing real-time log display and filtering
+/// </summary>
 public partial class LogsViewModel : ObservableObject
 {
     private readonly SignalRService _signalR;
     
+    /// <summary>
+    /// All log entries received from the system
+    /// </summary>
     [ObservableProperty]
     private ObservableCollection<LogEntry> _logs = new();
     
+    /// <summary>
+    /// Filtered log entries based on current filter criteria
+    /// </summary>
     [ObservableProperty]
     private ObservableCollection<LogEntry> _filteredLogs = new();
     
+    /// <summary>
+    /// Text filter for searching log messages and sources
+    /// </summary>
     [ObservableProperty]
     private string _filterText = "";
     
+    /// <summary>
+    /// Indicates whether auto-scroll to new logs is enabled
+    /// </summary>
     [ObservableProperty]
     private bool _autoScroll = true;
     
+    /// <summary>
+    /// Currently selected log level filter
+    /// </summary>
     [ObservableProperty]
     private string _selectedLogLevel = "All";
     
+    /// <summary>
+    /// Available log level filter options
+    /// </summary>
     public string[] LogLevels { get; } = { "All", "Debug", "Info", "Warning", "Error" };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LogsViewModel"/> class
+    /// </summary>
+    /// <param name="signalR">The SignalR service for receiving real-time log events</param>
     public LogsViewModel(SignalRService signalR)
     {
         _signalR = signalR;
@@ -115,6 +140,9 @@ public partial class LogsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Clears all logs from the display
+    /// </summary>
     [RelayCommand]
     private void ClearLogs()
     {
@@ -122,6 +150,9 @@ public partial class LogsViewModel : ObservableObject
         FilteredLogs.Clear();
     }
 
+    /// <summary>
+    /// Exports logs to a file (TXT or CSV format)
+    /// </summary>
     [RelayCommand]
     private void ExportLogs()
     {
@@ -188,6 +219,9 @@ public partial class LogsViewModel : ObservableObject
         return field;
     }
 
+    /// <summary>
+    /// Toggles the auto-scroll feature
+    /// </summary>
     [RelayCommand]
     private void ToggleAutoScroll()
     {

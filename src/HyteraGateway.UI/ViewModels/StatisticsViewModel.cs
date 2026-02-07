@@ -12,34 +12,65 @@ using SkiaSharp;
 
 namespace HyteraGateway.UI.ViewModels;
 
+/// <summary>
+/// ViewModel for the Statistics view, providing call analytics and charts
+/// </summary>
 public partial class StatisticsViewModel : ObservableObject
 {
     private readonly ApiService _api;
     
+    /// <summary>
+    /// Series data for the calls per day line chart
+    /// </summary>
     [ObservableProperty]
     private ISeries[] _callsPerDaySeries = Array.Empty<ISeries>();
     
+    /// <summary>
+    /// Series data for the call type pie chart
+    /// </summary>
     [ObservableProperty]
     private ISeries[] _callTypePieSeries = Array.Empty<ISeries>();
     
+    /// <summary>
+    /// Total number of calls in the selected date range
+    /// </summary>
     [ObservableProperty]
     private int _totalCalls;
     
+    /// <summary>
+    /// Total duration of all calls formatted as HH:mm:ss
+    /// </summary>
     [ObservableProperty]
     private string _totalDuration = "00:00:00";
     
+    /// <summary>
+    /// Number of active radios in the fleet
+    /// </summary>
     [ObservableProperty]
     private int _activeRadios;
     
+    /// <summary>
+    /// Start date for statistics filtering
+    /// </summary>
     [ObservableProperty]
     private DateTime _startDate = DateTime.Today.AddDays(-7);
     
+    /// <summary>
+    /// End date for statistics filtering
+    /// </summary>
     [ObservableProperty]
     private DateTime _endDate = DateTime.Today;
     
+    /// <summary>
+    /// Indicates whether statistics are currently being loaded
+    /// </summary>
     [ObservableProperty]
     private bool _isLoading;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StatisticsViewModel"/> class
+    /// </summary>
+    /// <param name="api">The API service for fetching statistics data</param>
     public StatisticsViewModel(ApiService api)
     {
         _api = api;
@@ -94,6 +125,9 @@ public partial class StatisticsViewModel : ObservableObject
         ActiveRadios = 12;
     }
 
+    /// <summary>
+    /// Refreshes statistics data for the selected date range
+    /// </summary>
     [RelayCommand]
     private async Task RefreshStatistics()
     {
@@ -116,6 +150,9 @@ public partial class StatisticsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Exports statistics data to an Excel file
+    /// </summary>
     [RelayCommand]
     private void ExportToExcel()
     {
