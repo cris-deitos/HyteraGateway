@@ -56,4 +56,21 @@ public class RadioEventsHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"radio-{dmrId}");
         _logger.LogInformation("Client {ConnectionId} unsubscribed from radio {DmrId}", Context.ConnectionId, dmrId);
     }
+
+    /// <summary>
+    /// Broadcast a log message to all connected clients
+    /// </summary>
+    /// <param name="level">Log level (Debug, Info, Warning, Error)</param>
+    /// <param name="source">Source of the log message</param>
+    /// <param name="message">Log message</param>
+    public async Task BroadcastLog(string level, string source, string message)
+    {
+        await Clients.All.SendAsync("LogMessage", new
+        {
+            Timestamp = DateTime.UtcNow,
+            Level = level,
+            Source = source,
+            Message = message
+        });
+    }
 }
