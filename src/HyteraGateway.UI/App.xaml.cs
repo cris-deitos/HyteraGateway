@@ -29,6 +29,7 @@ public partial class App : Application
         services.AddSingleton<ApiService>();
         services.AddSingleton<ConfigurationService>();
         services.AddSingleton<NetworkDiscoveryService>();
+        services.AddSingleton<AudioService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
@@ -37,6 +38,7 @@ public partial class App : Application
         services.AddSingleton<StatisticsViewModel>();
         services.AddSingleton<LogsViewModel>();
         services.AddSingleton<ToolsViewModel>();
+        services.AddSingleton<AudioControlViewModel>();
 
         // Windows
         services.AddSingleton<MainWindow>();
