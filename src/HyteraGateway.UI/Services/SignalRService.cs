@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using HyteraGateway.Core.Models;
+using HyteraGateway.UI.Models;
 
 namespace HyteraGateway.UI.Services;
 
@@ -10,7 +11,7 @@ public class SignalRService
     private HubConnection? _hubConnection;
     
     public event EventHandler<RadioEvent>? RadioEventReceived;
-    public event EventHandler<string>? LogReceived;
+    public event EventHandler<LogEntry>? LogReceived;
 
     public async Task ConnectAsync()
     {
@@ -24,7 +25,7 @@ public class SignalRService
             RadioEventReceived?.Invoke(this, evt);
         });
 
-        _hubConnection.On<string>("LogMessage", log =>
+        _hubConnection.On<LogEntry>("LogMessage", log =>
         {
             LogReceived?.Invoke(this, log);
         });
