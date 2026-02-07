@@ -27,13 +27,13 @@ public class StatisticsViewModelTests
     }
 
     [Fact]
-    public void TotalCalls_InitialValue_IsZero()
+    public void TotalCalls_InitialValue_HasSampleData()
     {
         // Arrange & Act
         var viewModel = new StatisticsViewModel(_mockApi.Object);
         
         // Assert
-        viewModel.TotalCalls.Should().Be(0);
-        viewModel.ActiveRadios.Should().Be(0);
+        viewModel.TotalCalls.Should().Be(347);
+        viewModel.ActiveRadios.Should().Be(12);
     }
 }

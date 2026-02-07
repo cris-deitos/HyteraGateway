@@ -38,7 +38,7 @@ public class ToolsViewModelTests
         viewModel.AnalyzePacketCommand.Execute(null);
         
         // Assert
-        viewModel.PacketAnalysisResult.Should().Contain("empty");
+        viewModel.PacketAnalysisResult.Should().Be("Please enter hex packet data");
     }
 
     [Fact]

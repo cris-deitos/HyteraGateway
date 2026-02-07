@@ -1,9 +1,11 @@
 using FluentAssertions;
 using HyteraGateway.UI.ViewModels;
 using HyteraGateway.UI.Services;
+using HyteraGateway.UI.Models;
 using HyteraGateway.Core.Configuration;
 using Moq;
 using Xunit;
+using System.Collections.Generic;
 
 namespace HyteraGateway.UI.Tests.ViewModels;
 
@@ -21,7 +23,19 @@ public class SettingsViewModelTests
     [Fact]
     public void DefaultValues_AreCorrect()
     {
-        // Arrange & Act
+        // Arrange
+        var mockConfig = new UIConfiguration
+        {
+            RadioIpAddress = "192.168.1.1",
+            RadioControlPort = 50000,
+            AutoReconnect = true,
+            DbHost = "localhost",
+            DbPort = 3306
+        };
+        _mockConfig.Setup(c => c.Configuration).Returns(mockConfig);
+        _mockNetworkDiscovery.Setup(n => n.GetUsbNetworkInterfaces()).Returns(new List<NetworkInterfaceInfo>());
+        
+        // Act
         var viewModel = new SettingsViewModel(_mockConfig.Object, _mockNetworkDiscovery.Object);
         
         // Assert
