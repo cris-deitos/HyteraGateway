@@ -1,7 +1,7 @@
+using System;
 using FluentAssertions;
 using HyteraGateway.UI.ViewModels;
 using HyteraGateway.UI.Services;
-using HyteraGateway.UI.Models;
 using Moq;
 using Xunit;
 
@@ -24,24 +24,13 @@ public class LogsViewModelTests
         
         // Assert
         viewModel.Logs.Should().NotBeNull();
-        viewModel.Logs.Should().NotBeEmpty(); // Contains sample logs
+        viewModel.Logs.Should().BeEmpty(); // No sample logs in new implementation
         viewModel.AutoScroll.Should().BeTrue();
-        viewModel.SelectedLogLevel.Should().Be("All");
+        viewModel.ShowInfo.Should().BeTrue();
+        viewModel.ShowWarning.Should().BeTrue();
+        viewModel.ShowError.Should().BeTrue();
         viewModel.FilterText.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void LogLevels_ContainsExpectedValues()
-    {
-        // Arrange
-        var viewModel = new LogsViewModel(_mockSignalR.Object);
-        
-        // Assert
-        viewModel.LogLevels.Should().Contain("All");
-        viewModel.LogLevels.Should().Contain("Debug");
-        viewModel.LogLevels.Should().Contain("Info");
-        viewModel.LogLevels.Should().Contain("Warning");
-        viewModel.LogLevels.Should().Contain("Error");
+        viewModel.MaxLogEntries.Should().Be(1000);
     }
 
     [Fact]
@@ -58,20 +47,81 @@ public class LogsViewModelTests
         viewModel.Logs.Should().BeEmpty();
     }
 
-    [Fact]
-    public void FilteredLogs_WithLevelFilter_ReturnsFilteredResults()
+    [Theory]
+    [InlineData("[ERROR] Test message", LogLevel.Error)]
+    [InlineData("[ERR] Test message", LogLevel.Error)]
+    [InlineData("[error] Test message", LogLevel.Error)]
+    [InlineData("[WARNING] Test message", LogLevel.Warning)]
+    [InlineData("[WARN] Test message", LogLevel.Warning)]
+    [InlineData("[warn] Test message", LogLevel.Warning)]
+    [InlineData("[INFO] Test message", LogLevel.Info)]
+    [InlineData("Plain message", LogLevel.Info)]
+    public void ParseLogEntry_ShouldDetectCorrectLevel(string message, LogLevel expectedLevel)
     {
         // Arrange
         var viewModel = new LogsViewModel(_mockSignalR.Object);
-        viewModel.Logs.Clear();
-        viewModel.Logs.Add(new LogEntry { Level = "Info", Message = "Info message" });
-        viewModel.Logs.Add(new LogEntry { Level = "Error", Message = "Error message" });
         
-        // Act
-        viewModel.SelectedLogLevel = "Error";
+        // Act - Call internal method directly via InternalsVisibleTo
+        var entry = viewModel.ParseLogEntry(message);
         
         // Assert
-        viewModel.FilteredLogs.Should().HaveCount(1);
-        viewModel.FilteredLogs.First().Level.Should().Be("Error");
+        entry.Level.Should().Be(expectedLevel);
+        entry.Message.Should().Be(message);
+    }
+
+    [Fact]
+    public void FilteredLogs_RespectsLevelFilters()
+    {
+        // Arrange
+        var viewModel = new LogsViewModel(_mockSignalR.Object);
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Info, Message = "Info message" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Warning, Message = "Warning message" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Error, Message = "Error message" });
+        
+        // Act - Show only errors
+        viewModel.ShowInfo = false;
+        viewModel.ShowWarning = false;
+        viewModel.ShowError = true;
+        
+        // Assert
+        var filtered = viewModel.FilteredLogs;
+        filtered.Should().HaveCount(1);
+        filtered.First().Level.Should().Be(LogLevel.Error);
+    }
+
+    [Fact]
+    public void FilteredLogs_RespectsTextFilter()
+    {
+        // Arrange
+        var viewModel = new LogsViewModel(_mockSignalR.Object);
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Info, Message = "Connection established" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Info, Message = "Data received" });
+        
+        // Act
+        viewModel.FilterText = "connection";
+        
+        // Assert
+        var filtered = viewModel.FilteredLogs;
+        filtered.Should().HaveCount(1);
+        filtered.First().Message.Should().ContainEquivalentOf("connection");
+    }
+
+    [Fact]
+    public void FilteredLogs_ShowsAllLogsWhenAllFiltersDisabled()
+    {
+        // Arrange
+        var viewModel = new LogsViewModel(_mockSignalR.Object);
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Info, Message = "Info message" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Warning, Message = "Warning message" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Error, Message = "Error message" });
+        
+        // Act - Disable all filters
+        viewModel.ShowInfo = false;
+        viewModel.ShowWarning = false;
+        viewModel.ShowError = false;
+        
+        // Assert - All logs should still be shown
+        var filtered = viewModel.FilteredLogs;
+        filtered.Should().HaveCount(3);
     }
 }
