@@ -3,12 +3,205 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <materialDesign:PackIcon Kind="Tools" Width="96" Height="96" HorizontalAlignment="Center"/>
-            <TextBlock Text="Tools View" Style="{StaticResource MaterialDesignHeadline4TextBlock}" 
-                       HorizontalAlignment="Center" Margin="0,16,0,0"/>
-            <TextBlock Text="Coming Soon" HorizontalAlignment="Center" Opacity="0.6"/>
-        </StackPanel>
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Grid.Row="0" Text="Diagnostic Tools" 
+                      Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                      Margin="0,0,0,16"/>
+
+            <!-- Tools Grid -->
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Connection Test -->
+                <materialDesign:Card Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="Ping Test" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" 
+                                    Text="{Binding PingTarget}" 
+                                    materialDesign:HintAssist.Hint="IP Address"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Margin="0,0,8,0"/>
+
+                            <Button Grid.Column="1" 
+                                   Command="{Binding PingRadioCommand}"
+                                   IsEnabled="{Binding IsPinging, Converter={StaticResource InverseBooleanConverter}}"
+                                   Style="{StaticResource MaterialDesignRaisedButton}"
+                                   Content="PING"/>
+                        </Grid>
+
+                        <TextBox Text="{Binding PingResult}" 
+                                IsReadOnly="True"
+                                TextWrapping="Wrap"
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                MinHeight="150"
+                                MaxHeight="200"
+                                FontFamily="Consolas"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- TCP Connection Test -->
+                <materialDesign:Card Grid.Row="0" Grid.Column="1" Margin="8,0,0,8" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="TCP Connection Test" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding TestConnectionTarget}" 
+                                materialDesign:HintAssist.Hint="IP Address"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,8"/>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" 
+                                    Text="{Binding TestConnectionPort}" 
+                                    materialDesign:HintAssist.Hint="Port"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Margin="0,0,8,0"/>
+
+                            <Button Grid.Column="1" 
+                                   Command="{Binding TestConnectionCommand}"
+                                   IsEnabled="{Binding IsTesting, Converter={StaticResource InverseBooleanConverter}}"
+                                   Style="{StaticResource MaterialDesignRaisedButton}"
+                                   Content="TEST"/>
+                        </Grid>
+
+                        <TextBox Text="{Binding TestConnectionResult}" 
+                                IsReadOnly="True"
+                                TextWrapping="Wrap"
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                MinHeight="150"
+                                MaxHeight="200"
+                                FontFamily="Consolas"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Packet Inspector -->
+                <materialDesign:Card Grid.Row="1" Grid.Column="0" Margin="0,8,8,0" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="Packet Inspector" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding HexPacketInput}" 
+                                materialDesign:HintAssist.Hint="Hex Packet Data (e.g., 48 65 6C 6C 6F)"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                AcceptsReturn="True"
+                                TextWrapping="Wrap"
+                                MinHeight="80"
+                                FontFamily="Consolas"
+                                Margin="0,0,0,8"/>
+
+                        <Button Command="{Binding AnalyzePacketCommand}"
+                               Content="ANALYZE"
+                               Style="{StaticResource MaterialDesignRaisedButton}"
+                               Margin="0,0,0,8"/>
+
+                        <TextBox Text="{Binding PacketAnalysisResult}" 
+                                IsReadOnly="True"
+                                TextWrapping="Wrap"
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                MinHeight="150"
+                                MaxHeight="200"
+                                FontFamily="Consolas"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Network Scanner -->
+                <materialDesign:Card Grid.Row="1" Grid.Column="1" Margin="8,8,0,0" Padding="16">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" 
+                                      Text="Network Scanner" 
+                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+
+                            <Button Grid.Column="1" 
+                                   Command="{Binding ScanNetworkInterfacesCommand}"
+                                   IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBooleanConverter}}"
+                                   Style="{StaticResource MaterialDesignIconButton}">
+                                <materialDesign:PackIcon Kind="Refresh"/>
+                            </Button>
+                        </Grid>
+
+                        <TextBlock Text="Detected USB Network Interfaces:" 
+                                  Margin="0,0,0,8"
+                                  Opacity="0.7"/>
+
+                        <ListView ItemsSource="{Binding DetectedInterfaces}"
+                                 MinHeight="200"
+                                 MaxHeight="300">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" 
+                                                  Text="{Binding Name}" 
+                                                  FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="1" 
+                                                  Text="{Binding Description}" 
+                                                  Opacity="0.7"
+                                                  FontSize="12"/>
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                            <TextBlock Text="IP: " FontSize="12" Opacity="0.7"/>
+                                            <TextBlock Text="{Binding IpAddress}" FontSize="12" FontWeight="SemiBold"/>
+                                            <TextBlock Text=" | Gateway: " FontSize="12" Opacity="0.7" Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding GatewayAddress}" FontSize="12" FontWeight="SemiBold"/>
+                                            <TextBlock Text=" | Type: " FontSize="12" Opacity="0.7" Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding Type}" FontSize="12"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBlock Text="Tip: Gateway address is likely the radio IP" 
+                                  Margin="0,8,0,0"
+                                  FontStyle="Italic"
+                                  Opacity="0.6"
+                                  FontSize="12"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
 </UserControl>
