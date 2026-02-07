@@ -12,10 +12,16 @@ using HyteraGateway.UI.Services;
 
 namespace HyteraGateway.UI.ViewModels;
 
+/// <summary>
+/// ViewModel for the Tools view, providing diagnostic utilities
+/// </summary>
 public partial class ToolsViewModel : ObservableObject
 {
     private readonly NetworkDiscoveryService _networkDiscovery;
     
+    /// <summary>
+    /// Target IP address for ping test
+    /// </summary>
     [ObservableProperty]
     private string _pingTarget = "192.168.1.1";
     
@@ -65,12 +71,19 @@ public partial class ToolsViewModel : ObservableObject
     [ObservableProperty]
     private string _serviceStatusColor = "#9E9E9E";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ToolsViewModel"/> class
+    /// </summary>
+    /// <param name="networkDiscovery">The network discovery service</param>
     public ToolsViewModel(NetworkDiscoveryService networkDiscovery)
     {
         _networkDiscovery = networkDiscovery;
         RefreshServiceStatus();
     }
 
+    /// <summary>
+    /// Pings the specified target IP address
+    /// </summary>
     [RelayCommand]
     private async Task PingRadio()
     {
@@ -106,6 +119,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Tests TCP connection to the specified target and port
+    /// </summary>
     [RelayCommand]
     private async Task TestConnection()
     {
@@ -145,6 +161,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Analyzes a hex packet and displays decoded information
+    /// </summary>
     [RelayCommand]
     private void AnalyzePacket()
     {
@@ -202,6 +221,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Scans for USB network interfaces
+    /// </summary>
     [RelayCommand]
     private async Task ScanNetworkInterfaces()
     {
@@ -233,6 +255,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Scans the specified subnet for radios
+    /// </summary>
     [RelayCommand]
     private async Task ScanNetwork()
     {
@@ -261,6 +286,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Refreshes the service status display
+    /// </summary>
     [RelayCommand]
     private void RefreshServiceStatus()
     {
@@ -295,6 +323,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Starts the HyteraGateway Windows service
+    /// </summary>
     [RelayCommand]
     private void StartService()
     {
@@ -318,6 +349,9 @@ public partial class ToolsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Stops the HyteraGateway Windows service
+    /// </summary>
     [RelayCommand]
     private void StopService()
     {

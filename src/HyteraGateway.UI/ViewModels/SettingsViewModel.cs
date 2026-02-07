@@ -12,23 +12,44 @@ using Microsoft.Win32;
 
 namespace HyteraGateway.UI.ViewModels;
 
+/// <summary>
+/// ViewModel for the Settings view, managing application configuration
+/// </summary>
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ConfigurationService _config;
     private readonly NetworkDiscoveryService _networkDiscovery;
     
-    // Connection type
+    /// <summary>
+    /// Available radio connection types
+    /// </summary>
     public RadioConnectionType[] ConnectionTypes { get; } = Enum.GetValues<RadioConnectionType>();
     
+    /// <summary>
+    /// Selected radio connection type
+    /// </summary>
     [ObservableProperty]
     private RadioConnectionType _selectedConnectionType = RadioConnectionType.USB;
     
-    // Computed visibility properties
+    /// <summary>
+    /// Gets whether USB mode is currently selected
+    /// </summary>
     public bool IsUsbMode => SelectedConnectionType == RadioConnectionType.USB;
+    
+    /// <summary>
+    /// Gets whether Ethernet mode is currently selected
+    /// </summary>
     public bool IsEthernetMode => SelectedConnectionType == RadioConnectionType.Ethernet;
+    
+    /// <summary>
+    /// Gets whether Auto mode is currently selected
+    /// </summary>
     public bool IsAutoMode => SelectedConnectionType == RadioConnectionType.Auto;
     
     // Radio settings
+    /// <summary>
+    /// Radio IP address
+    /// </summary>
     [ObservableProperty]
     private string _radioIpAddress = "192.168.1.1";
     
@@ -111,6 +132,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _audioBitrate = 128;
     
+    /// <summary>
+    /// Available audio format options
+    /// </summary>
     public string[] AudioFormats { get; } = { "WAV", "MP3" };
     
     // FTP settings
@@ -141,6 +165,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SettingsViewModel"/> class
+    /// </summary>
+    /// <param name="config">The configuration service</param>
+    /// <param name="networkDiscovery">The network discovery service</param>
     public SettingsViewModel(ConfigurationService config, NetworkDiscoveryService networkDiscovery)
     {
         _config = config;
@@ -188,6 +217,9 @@ public partial class SettingsViewModel : ObservableObject
         FtpAutoUpload = cfg.FtpAutoUpload;
     }
 
+    /// <summary>
+    /// Saves all configuration settings
+    /// </summary>
     [RelayCommand]
     private void SaveSettings()
     {
@@ -250,6 +282,9 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Tests the radio connection with current settings
+    /// </summary>
     [RelayCommand]
     private async Task TestRadioConnection()
     {
@@ -270,6 +305,9 @@ public partial class SettingsViewModel : ObservableObject
         StatusMessage = "";
     }
 
+    /// <summary>
+    /// Tests the database connection with current settings
+    /// </summary>
     [RelayCommand]
     private async Task TestDatabaseConnection()
     {
@@ -283,6 +321,9 @@ public partial class SettingsViewModel : ObservableObject
         StatusMessage = "";
     }
 
+    /// <summary>
+    /// Opens a folder browser dialog to select the audio storage path
+    /// </summary>
     [RelayCommand]
     private void BrowseStoragePath()
     {
@@ -303,6 +344,9 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Refreshes the list of USB network interfaces
+    /// </summary>
     [RelayCommand]
     private void RefreshNetworkInterfaces()
     {
@@ -341,6 +385,9 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAutoMode));
     }
     
+    /// <summary>
+    /// Scans the specified subnet for radios
+    /// </summary>
     [RelayCommand]
     private async Task ScanNetworkAsync()
     {
@@ -380,6 +427,9 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
     
+    /// <summary>
+    /// Uses the selected discovered radio's settings
+    /// </summary>
     [RelayCommand]
     private void UseSelectedRadio()
     {
