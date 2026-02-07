@@ -13,6 +13,8 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout
@@ -49,6 +51,8 @@ jobs:
   build-ui:
     runs-on: windows-latest
     needs: build
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout
