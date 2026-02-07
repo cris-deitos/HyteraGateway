@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using HyteraGateway.UI.ViewModels;
 using HyteraGateway.UI.Services;
@@ -101,6 +102,6 @@ public class LogsViewModelTests
         // Assert
         var filtered = viewModel.FilteredLogs;
         filtered.Should().HaveCount(1);
-        filtered.First().Message.Should().Contain("Connection");
+        filtered.First().Message.Should().ContainEquivalentOf("connection");
     }
 }

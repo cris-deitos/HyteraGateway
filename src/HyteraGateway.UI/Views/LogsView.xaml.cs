@@ -1,5 +1,7 @@
+using System;
 using System.Windows.Controls;
 using HyteraGateway.UI.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HyteraGateway.UI.Views;
 
@@ -10,7 +12,9 @@ public partial class LogsView : UserControl
         InitializeComponent();
         
         // Get ViewModel from DI
-        var app = (App)System.Windows.Application.Current;
-        DataContext = app.ServiceProvider.GetService(typeof(LogsViewModel));
+        if (System.Windows.Application.Current is App app)
+        {
+            DataContext = app.ServiceProvider.GetService<LogsViewModel>();
+        }
     }
 }

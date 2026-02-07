@@ -17,6 +17,9 @@ public partial class LogsViewModel : ObservableObject
     private ObservableCollection<LogEntry> _logs = new();
     
     [ObservableProperty]
+    private ObservableCollection<LogEntry> _filteredLogs = new();
+    
+    [ObservableProperty]
     private string _filterText = string.Empty;
     
     [ObservableProperty]
@@ -33,14 +36,6 @@ public partial class LogsViewModel : ObservableObject
     
     [ObservableProperty]
     private int _maxLogEntries = 1000;
-    
-    public ObservableCollection<LogEntry> FilteredLogs => new(
-        Logs.Where(l => 
-            (string.IsNullOrEmpty(FilterText) || l.Message.Contains(FilterText, StringComparison.OrdinalIgnoreCase)) &&
-            ((ShowInfo && l.Level == LogLevel.Info) ||
-             (ShowWarning && l.Level == LogLevel.Warning) ||
-             (ShowError && l.Level == LogLevel.Error)))
-    );
 
     public LogsViewModel(SignalRService signalR)
     {
@@ -61,7 +56,7 @@ public partial class LogsViewModel : ObservableObject
                 Logs.RemoveAt(0);
             }
             
-            OnPropertyChanged(nameof(FilteredLogs));
+            UpdateFilteredLogs();
         });
     }
     
@@ -82,15 +77,31 @@ public partial class LogsViewModel : ObservableObject
         };
     }
 
+    private void UpdateFilteredLogs()
+    {
+        var filtered = Logs.Where(l => 
+            (string.IsNullOrEmpty(FilterText) || l.Message.Contains(FilterText, StringComparison.OrdinalIgnoreCase)) &&
+            ((ShowInfo && l.Level == LogLevel.Info) ||
+             (ShowWarning && l.Level == LogLevel.Warning) ||
+             (ShowError && l.Level == LogLevel.Error))
+        );
+
+        FilteredLogs.Clear();
+        foreach (var log in filtered)
+        {
+            FilteredLogs.Add(log);
+        }
+    }
+
     [RelayCommand]
     private void ClearLogs()
     {
         Logs.Clear();
-        OnPropertyChanged(nameof(FilteredLogs));
+        UpdateFilteredLogs();
     }
     
     [RelayCommand]
-    private async Task ExportLogsAsync()
+    private async Task ExportLogs()
     {
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
@@ -101,15 +112,15 @@ public partial class LogsViewModel : ObservableObject
         
         if (dialog.ShowDialog() == true)
         {
-            var lines = Logs.Select(l => $"[{l.Timestamp:yyyy-MM-dd HH:mm:ss}] [{l.Level}] {l.Message}");
+            var lines = FilteredLogs.Select(l => $"[{l.Timestamp:yyyy-MM-dd HH:mm:ss}] [{l.Level}] {l.Message}");
             await System.IO.File.WriteAllLinesAsync(dialog.FileName, lines);
         }
     }
     
-    partial void OnFilterTextChanged(string value) => OnPropertyChanged(nameof(FilteredLogs));
-    partial void OnShowInfoChanged(bool value) => OnPropertyChanged(nameof(FilteredLogs));
-    partial void OnShowWarningChanged(bool value) => OnPropertyChanged(nameof(FilteredLogs));
-    partial void OnShowErrorChanged(bool value) => OnPropertyChanged(nameof(FilteredLogs));
+    partial void OnFilterTextChanged(string value) => UpdateFilteredLogs();
+    partial void OnShowInfoChanged(bool value) => UpdateFilteredLogs();
+    partial void OnShowWarningChanged(bool value) => UpdateFilteredLogs();
+    partial void OnShowErrorChanged(bool value) => UpdateFilteredLogs();
 }
 
 public class LogEntry
