@@ -205,13 +205,11 @@ public class NetworkDiscoveryService
     /// <summary>
     /// Try to identify radio model by connecting and reading response
     /// </summary>
-    public async Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
+    public Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
     {
+        // TODO: Future enhancement - query IPSC protocol to get actual model info
         // For now, we just return basic info
-        // Future enhancement: query IPSC protocol to get model info
-        await Task.CompletedTask;
-        
-        return new DiscoveredRadio
+        var radio = new DiscoveredRadio
         {
             IpAddress = ipAddress,
             Port = 50000,
@@ -220,5 +218,7 @@ public class NetworkDiscoveryService
             IsOnline = true,
             DiscoveredAt = DateTime.Now
         };
+        
+        return Task.FromResult(radio);
     }
 }

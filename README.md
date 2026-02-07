@@ -28,12 +28,16 @@ A modern .NET 8 gateway for interfacing with Hytera DMR radios via USB NCM or di
 
 ### Connection Configuration
 
+The gateway supports multiple connection types depending on your radio model:
+
 | Radio Type | Connection | Typical IP | Configuration |
 |------------|------------|------------|---------------|
 | MD785i (USB NCM) | USB Cable | 192.168.1.1 | Auto-detected via USB interface |
 | MD785i (USB RNDIS) | USB Cable | 192.168.42.1 | Auto-detected via USB interface |
 | HM785 (Ethernet) | RJ45 Cable | DHCP or Static | Manual IP or network scan |
 | HR1065 (Ethernet) | RJ45 Cable | DHCP or Static | Manual IP or network scan |
+
+**Note:** USB radios may use either NCM or RNDIS drivers depending on your operating system and radio firmware. The IP address (192.168.1.1 or 192.168.42.1) is determined by the radio's USB configuration. The gateway's auto-detect feature will find the correct interface automatically.
 
 ### Phase 2.5 - Production Features (NEW)
 

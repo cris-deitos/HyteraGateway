@@ -109,7 +109,7 @@
                                      SelectionMode="Single"
                                      MaxHeight="200"
                                      Margin="0,0,0,8"
-                                     Visibility="{Binding DiscoveredRadios.Count, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                     Visibility="{Binding DiscoveredRadios.Count, Converter={StaticResource CountToVisibility}}">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}" Width="*"/>
                                     <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="*"/>

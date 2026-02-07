@@ -247,7 +247,7 @@
                              CanUserDeleteRows="False"
                              Margin="0,16,0,0" 
                              MaxHeight="300"
-                             Visibility="{Binding DiscoveredRadios.Count, Converter={StaticResource BooleanToVisibilityConverter}}">
+                             Visibility="{Binding DiscoveredRadios.Count, Converter={StaticResource CountToVisibility}}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}" Width="*"/>
                             <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="Auto"/>
