@@ -3,12 +3,312 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <materialDesign:PackIcon Kind="Settings" Width="96" Height="96" HorizontalAlignment="Center"/>
-            <TextBlock Text="Settings View" Style="{StaticResource MaterialDesignHeadline4TextBlock}" 
-                       HorizontalAlignment="Center" Margin="0,16,0,0"/>
-            <TextBlock Text="Coming Soon" HorizontalAlignment="Center" Opacity="0.6"/>
-        </StackPanel>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="Settings" 
+                  Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                  Margin="0,0,0,16"/>
+
+        <!-- Tabs -->
+        <TabControl Grid.Row="1" 
+                   Style="{StaticResource MaterialDesignNavigationRailTabControl}">
+            
+            <!-- Radio Tab -->
+            <TabItem Header="Radio">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="Radio" Width="24" Height="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Radio" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="Radio Connection Settings" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <ComboBox ItemsSource="{Binding NetworkInterfaces}"
+                                 SelectedItem="{Binding SelectedInterface}"
+                                 DisplayMemberPath="DisplayName"
+                                 materialDesign:HintAssist.Hint="Network Interface"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                 Margin="0,0,0,16"/>
+
+                        <Button Command="{Binding RefreshNetworkInterfacesCommand}"
+                               Content="Scan Network Interfaces"
+                               Style="{StaticResource MaterialDesignOutlinedButton}"
+                               Margin="0,0,0,24"/>
+
+                        <TextBox Text="{Binding RadioIpAddress}" 
+                                materialDesign:HintAssist.Hint="Radio IP Address"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding RadioControlPort}" 
+                                materialDesign:HintAssist.Hint="Control Port"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding RadioAudioPort}" 
+                                materialDesign:HintAssist.Hint="Audio Port"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding DispatcherId}" 
+                                materialDesign:HintAssist.Hint="Dispatcher ID"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <CheckBox IsChecked="{Binding AutoReconnect}"
+                                 Content="Auto-reconnect on disconnect"
+                                 Margin="0,0,0,16"/>
+
+                        <Button Command="{Binding TestRadioConnectionCommand}"
+                               Content="Test Connection"
+                               Style="{StaticResource MaterialDesignRaisedButton}"
+                               Margin="0,8,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Database Tab -->
+            <TabItem Header="Database">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="Database" Width="24" Height="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Database" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="Database Connection Settings" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding DbHost}" 
+                                materialDesign:HintAssist.Hint="Host"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding DbPort}" 
+                                materialDesign:HintAssist.Hint="Port"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding DbName}" 
+                                materialDesign:HintAssist.Hint="Database Name"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding DbUsername}" 
+                                materialDesign:HintAssist.Hint="Username"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <PasswordBox materialDesign:HintAssist.Hint="Password"
+                                    Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                    Margin="0,0,0,16"/>
+
+                        <Button Command="{Binding TestDatabaseConnectionCommand}"
+                               Content="Test Connection"
+                               Style="{StaticResource MaterialDesignRaisedButton}"
+                               Margin="0,8,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- API Tab -->
+            <TabItem Header="API">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="Api" Width="24" Height="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="API" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="API Settings" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding ApiBaseUrl}" 
+                                materialDesign:HintAssist.Hint="Base URL"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding ApiPort}" 
+                                materialDesign:HintAssist.Hint="Port"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+
+                        <CheckBox IsChecked="{Binding EnableHttps}"
+                                 Content="Enable HTTPS"
+                                 Margin="0,0,0,8"/>
+
+                        <CheckBox IsChecked="{Binding EnableSwagger}"
+                                 Content="Enable Swagger"
+                                 Margin="0,0,0,8"/>
+
+                        <TextBox Text="{Binding CorsOrigins}" 
+                                materialDesign:HintAssist.Hint="CORS Origins (comma-separated)"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,16,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Audio Tab -->
+            <TabItem Header="Audio">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="Microphone" Width="24" Height="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Audio" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="Audio Recording Settings" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <CheckBox IsChecked="{Binding RecordingEnabled}"
+                                 Content="Enable Recording"
+                                 Margin="0,0,0,16"/>
+
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox Grid.Column="0" Text="{Binding StoragePath}" 
+                                    materialDesign:HintAssist.Hint="Storage Path"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Margin="0,0,8,0"/>
+                            
+                            <Button Grid.Column="1" 
+                                   Command="{Binding BrowseStoragePathCommand}"
+                                   Style="{StaticResource MaterialDesignIconButton}">
+                                <materialDesign:PackIcon Kind="FolderOpen"/>
+                            </Button>
+                        </Grid>
+
+                        <ComboBox ItemsSource="{Binding AudioFormats}"
+                                 SelectedItem="{Binding AudioFormat}"
+                                 materialDesign:HintAssist.Hint="Audio Format"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                 Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding AudioBitrate}" 
+                                materialDesign:HintAssist.Hint="Bitrate (kbps)"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- FTP Tab -->
+            <TabItem Header="FTP">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="CloudUpload" Width="24" Height="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="FTP" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="FTP Upload Settings" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                  Margin="0,0,0,16"/>
+
+                        <CheckBox IsChecked="{Binding FtpEnabled}"
+                                 Content="Enable FTP Upload"
+                                 Margin="0,0,0,16"/>
+
+                        <TextBox Text="{Binding FtpHost}" 
+                                materialDesign:HintAssist.Hint="FTP Host"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"
+                                IsEnabled="{Binding FtpEnabled}"/>
+
+                        <TextBox Text="{Binding FtpPort}" 
+                                materialDesign:HintAssist.Hint="Port"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"
+                                IsEnabled="{Binding FtpEnabled}"/>
+
+                        <TextBox Text="{Binding FtpUsername}" 
+                                materialDesign:HintAssist.Hint="Username"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"
+                                IsEnabled="{Binding FtpEnabled}"/>
+
+                        <PasswordBox materialDesign:HintAssist.Hint="Password"
+                                    Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                    Margin="0,0,0,16"
+                                    IsEnabled="{Binding FtpEnabled}"/>
+
+                        <TextBox Text="{Binding FtpRemotePath}" 
+                                materialDesign:HintAssist.Hint="Remote Path"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,16"
+                                IsEnabled="{Binding FtpEnabled}"/>
+
+                        <CheckBox IsChecked="{Binding FtpAutoUpload}"
+                                 Content="Auto-upload after recording"
+                                 IsEnabled="{Binding FtpEnabled}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Action Buttons -->
+        <materialDesign:Card Grid.Row="2" Padding="16" Margin="0,16,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" 
+                          Text="{Binding StatusMessage}" 
+                          VerticalAlignment="Center"
+                          Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+
+                <Button Grid.Column="1" 
+                       Content="CANCEL"
+                       Style="{StaticResource MaterialDesignOutlinedButton}"
+                       Margin="0,0,8,0"
+                       Width="100"/>
+
+                <Button Grid.Column="2" 
+                       Command="{Binding SaveSettingsCommand}"
+                       Content="SAVE"
+                       Style="{StaticResource MaterialDesignRaisedButton}"
+                       Width="100"/>
+            </Grid>
+        </materialDesign:Card>
     </Grid>
 </UserControl>
