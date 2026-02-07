@@ -18,7 +18,7 @@ public class NetworkDiscoveryService
     /// <summary>
     /// Get all network interfaces that might be RNDIS or NCM (USB network adapters)
     /// </summary>
-    public List<NetworkInterfaceInfo> GetUsbNetworkInterfaces()
+    public virtual List<NetworkInterfaceInfo> GetUsbNetworkInterfaces()
     {
         return NetworkInterface.GetAllNetworkInterfaces()
             .Where(ni => ni.OperationalStatus == OperationalStatus.Up)
@@ -99,7 +99,7 @@ public class NetworkDiscoveryService
     /// <summary>
     /// Test radio connection by attempting to connect to the specified IP and port
     /// </summary>
-    public async Task<bool> TestRadioConnectionAsync(string ipAddress, int port = 50000, int timeoutMs = 3000)
+    public virtual async Task<bool> TestRadioConnectionAsync(string ipAddress, int port = 50000, int timeoutMs = 3000)
     {
         try
         {
@@ -125,7 +125,7 @@ public class NetworkDiscoveryService
     /// <summary>
     /// Ping an IP address to test basic connectivity
     /// </summary>
-    public async Task<(bool Success, long RoundtripTime, string Message)> PingAsync(string ipAddress, int timeoutMs = 3000)
+    public virtual async Task<(bool Success, long RoundtripTime, string Message)> PingAsync(string ipAddress, int timeoutMs = 3000)
     {
         if (string.IsNullOrWhiteSpace(ipAddress))
         {
@@ -154,7 +154,7 @@ public class NetworkDiscoveryService
     /// Scan a subnet for Hytera radios by testing port 50000
     /// Used for Ethernet-connected radios like HM785
     /// </summary>
-    public async Task<List<DiscoveredRadio>> ScanSubnetForRadiosAsync(
+    public virtual async Task<List<DiscoveredRadio>> ScanSubnetForRadiosAsync(
         string subnet,           // e.g., "10.0.0"
         int startIp = 1,
         int endIp = 254,
@@ -205,7 +205,7 @@ public class NetworkDiscoveryService
     /// <summary>
     /// Try to identify radio model by connecting and reading response
     /// </summary>
-    public Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
+    public virtual Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
     {
         // TODO: Future enhancement - query IPSC protocol to get actual model info
         // For now, we just return basic info

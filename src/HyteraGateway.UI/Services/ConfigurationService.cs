@@ -16,7 +16,7 @@ public class ConfigurationService
     /// <summary>
     /// Gets the current configuration
     /// </summary>
-    public UIConfiguration Configuration { get; private set; }
+    public virtual UIConfiguration Configuration { get; private set; }
 
     public ConfigurationService()
     {
@@ -37,7 +37,7 @@ public class ConfigurationService
     /// <summary>
     /// Load configuration from JSON file
     /// </summary>
-    public void LoadConfiguration()
+    public virtual void LoadConfiguration()
     {
         try
         {
@@ -62,7 +62,7 @@ public class ConfigurationService
     /// <summary>
     /// Save configuration to JSON file
     /// </summary>
-    public void SaveConfiguration()
+    public virtual void SaveConfiguration()
     {
         try
         {
