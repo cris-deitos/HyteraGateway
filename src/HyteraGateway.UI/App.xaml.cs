@@ -28,6 +28,7 @@ public partial class App : Application
         services.AddSingleton<SignalRService>();
         services.AddSingleton<ApiService>();
         services.AddSingleton<ConfigurationService>();
+        services.AddSingleton<NetworkDiscoveryService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();

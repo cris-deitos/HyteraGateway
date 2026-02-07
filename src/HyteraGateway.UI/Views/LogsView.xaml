@@ -3,12 +3,121 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <materialDesign:PackIcon Kind="TextBox" Width="96" Height="96" HorizontalAlignment="Center"/>
-            <TextBlock Text="Logs View" Style="{StaticResource MaterialDesignHeadline4TextBlock}" 
-                       HorizontalAlignment="Center" Margin="0,16,0,0"/>
-            <TextBlock Text="Coming Soon" HorizontalAlignment="Center" Opacity="0.6"/>
-        </StackPanel>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <materialDesign:Card Grid.Row="0" Padding="8" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Title -->
+                <TextBlock Grid.Column="0" Text="Logs" 
+                          Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                          VerticalAlignment="Center" Margin="8,0"/>
+
+                <!-- Filter Text -->
+                <TextBox Grid.Column="1" 
+                        Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" 
+                        materialDesign:HintAssist.Hint="Search logs..."
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Margin="8,0" MinWidth="200"/>
+
+                <!-- Log Level Filter -->
+                <ComboBox Grid.Column="2" 
+                         ItemsSource="{Binding LogLevels}"
+                         SelectedItem="{Binding SelectedLogLevel}"
+                         materialDesign:HintAssist.Hint="Level"
+                         Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                         Width="120" Margin="8,0"/>
+
+                <!-- Auto Scroll Toggle -->
+                <ToggleButton Grid.Column="3" 
+                             IsChecked="{Binding AutoScroll}"
+                             ToolTip="Auto Scroll"
+                             Style="{StaticResource MaterialDesignActionToggleButton}"
+                             Margin="8,0">
+                    <materialDesign:PackIcon Kind="ArrowDown"/>
+                </ToggleButton>
+
+                <!-- Clear Button -->
+                <Button Grid.Column="4" 
+                       Command="{Binding ClearLogsCommand}"
+                       ToolTip="Clear Logs"
+                       Style="{StaticResource MaterialDesignIconButton}"
+                       Margin="4,0">
+                    <materialDesign:PackIcon Kind="Delete"/>
+                </Button>
+
+                <!-- Export Button -->
+                <Button Grid.Column="5" 
+                       Command="{Binding ExportLogsCommand}"
+                       ToolTip="Export Logs"
+                       Style="{StaticResource MaterialDesignIconButton}"
+                       Margin="4,0">
+                    <materialDesign:PackIcon Kind="Download"/>
+                </Button>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Logs DataGrid -->
+        <materialDesign:Card Grid.Row="1">
+            <DataGrid ItemsSource="{Binding FilteredLogs}"
+                     AutoGenerateColumns="False"
+                     CanUserAddRows="False"
+                     CanUserDeleteRows="False"
+                     IsReadOnly="True"
+                     SelectionMode="Single"
+                     HeadersVisibility="Column"
+                     GridLinesVisibility="Horizontal"
+                     materialDesign:DataGridAssist.CellPadding="8,4"
+                     materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Timestamp" 
+                                       Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}"
+                                       Width="140"/>
+                    <DataGridTextColumn Header="Level" 
+                                       Binding="{Binding Level}"
+                                       Width="80">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Level}" Value="Error">
+                                        <Setter Property="Foreground" Value="#F44336"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Level}" Value="Info">
+                                        <Setter Property="Foreground" Value="#2196F3"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Level}" Value="Debug">
+                                        <Setter Property="Foreground" Value="#9E9E9E"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Source" 
+                                       Binding="{Binding Source}"
+                                       Width="120"/>
+                    <DataGridTextColumn Header="Message" 
+                                       Binding="{Binding Message}"
+                                       Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
     </Grid>
 </UserControl>
