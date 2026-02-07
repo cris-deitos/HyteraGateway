@@ -1,7 +1,8 @@
 <UserControl x:Class="HyteraGateway.UI.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:views="clr-namespace:HyteraGateway.UI.Views">
     
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="16">
@@ -41,6 +42,10 @@
                     </StackPanel>
                 </materialDesign:Card>
             </UniformGrid>
+
+            <!-- Audio Control -->
+            <TextBlock Text="Audio Control" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Margin="0,24,0,16"/>
+            <views:AudioControlView Margin="8"/>
 
             <!-- Radio List -->
             <TextBlock Text="Active Radios" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Margin="0,24,0,16"/>

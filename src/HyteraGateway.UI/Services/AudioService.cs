@@ -1,0 +1,192 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
+using NAudio.Wave;
+
+namespace HyteraGateway.UI.Services;
+
+public class AudioService : IDisposable
+{
+    private HubConnection? _hubConnection;
+    private WaveOutEvent? _waveOut;
+    private BufferedWaveProvider? _bufferedWaveProvider;
+    private WaveInEvent? _waveIn;
+    private bool _isTransmitting;
+    private bool _isReceiving;
+    
+    public event EventHandler<AudioStateChangedEventArgs>? StateChanged;
+    public event EventHandler<float>? AudioLevelChanged;
+    
+    public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
+    public bool IsTransmitting => _isTransmitting;
+    public bool IsReceiving => _isReceiving;
+    public float Volume { get; set; } = 1.0f;
+    public bool IsMuted { get; set; }
+
+    public async Task ConnectAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/hubs/audio")
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On<byte[], int, int, long>("ReceiveAudio", OnAudioReceived);
+        
+        // Initialize audio output (48kHz Opus decoded to PCM)
+        _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(48000, 16, 1))
+        {
+            BufferDuration = TimeSpan.FromSeconds(5),
+            DiscardOnBufferOverflow = true
+        };
+        
+        _waveOut = new WaveOutEvent();
+        _waveOut.Init(_bufferedWaveProvider);
+
+        try
+        {
+            await _hubConnection.StartAsync();
+            StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Connected"));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Audio hub connection failed: {ex.Message}");
+        }
+    }
+
+    public async Task SubscribeToRadioAsync(int radioId)
+    {
+        if (_hubConnection != null)
+        {
+            await _hubConnection.InvokeAsync("SubscribeToAudio", radioId, null);
+        }
+    }
+
+    public async Task SubscribeToTalkGroupAsync(int talkGroupId)
+    {
+        if (_hubConnection != null)
+        {
+            await _hubConnection.InvokeAsync("SubscribeToAudio", null, talkGroupId);
+        }
+    }
+
+    public void StartPlayback()
+    {
+        if (_waveOut?.PlaybackState != PlaybackState.Playing)
+        {
+            _waveOut?.Play();
+            _isReceiving = true;
+            StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Receiving"));
+        }
+    }
+
+    public void StopPlayback()
+    {
+        _waveOut?.Stop();
+        _isReceiving = false;
+        StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Idle"));
+    }
+
+    public async Task StartTransmitAsync(int targetRadioId)
+    {
+        if (_isTransmitting) return;
+        
+        _waveIn = new WaveInEvent
+        {
+            WaveFormat = new WaveFormat(48000, 16, 1),
+            BufferMilliseconds = 20
+        };
+        
+        _waveIn.DataAvailable += async (s, e) =>
+        {
+            if (_hubConnection != null && _isTransmitting)
+            {
+                // Send raw PCM to server (server will encode to Opus then AMBE)
+                await _hubConnection.InvokeAsync("SendAudioToRadio", e.Buffer, targetRadioId);
+                
+                // Calculate audio level for UI meter
+                float level = CalculateAudioLevel(e.Buffer, e.BytesRecorded);
+                AudioLevelChanged?.Invoke(this, level);
+            }
+        };
+        
+        _waveIn.StartRecording();
+        _isTransmitting = true;
+        StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Transmitting"));
+    }
+
+    public void StopTransmit()
+    {
+        _waveIn?.StopRecording();
+        _waveIn?.Dispose();
+        _waveIn = null;
+        _isTransmitting = false;
+        StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Idle"));
+    }
+
+    private void OnAudioReceived(byte[] opusData, int radioId, int talkGroupId, long timestamp)
+    {
+        if (IsMuted || _bufferedWaveProvider == null) return;
+        
+        // In production, decode Opus here. For now, assume PCM
+        // Apply volume
+        byte[] adjusted = ApplyVolume(opusData, Volume);
+        _bufferedWaveProvider.AddSamples(adjusted, 0, adjusted.Length);
+        
+        if (!_isReceiving)
+        {
+            StartPlayback();
+        }
+    }
+
+    private byte[] ApplyVolume(byte[] pcmData, float volume)
+    {
+        if (Math.Abs(volume - 1.0f) < 0.01f) return pcmData;
+        
+        byte[] result = new byte[pcmData.Length];
+        for (int i = 0; i < pcmData.Length; i += 2)
+        {
+            short sample = (short)(pcmData[i] | (pcmData[i + 1] << 8));
+            sample = (short)(sample * volume);
+            result[i] = (byte)(sample & 0xFF);
+            result[i + 1] = (byte)((sample >> 8) & 0xFF);
+        }
+        return result;
+    }
+
+    private float CalculateAudioLevel(byte[] buffer, int bytesRecorded)
+    {
+        float max = 0;
+        for (int i = 0; i < bytesRecorded; i += 2)
+        {
+            short sample = (short)(buffer[i] | (buffer[i + 1] << 8));
+            float abs = Math.Abs(sample / 32768f);
+            if (abs > max) max = abs;
+        }
+        return max;
+    }
+
+    public async Task DisconnectAsync()
+    {
+        StopTransmit();
+        StopPlayback();
+        
+        if (_hubConnection != null)
+        {
+            await _hubConnection.StopAsync();
+            await _hubConnection.DisposeAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        _waveIn?.Dispose();
+        _waveOut?.Dispose();
+        _hubConnection?.DisposeAsync().AsTask().Wait();
+    }
+}
+
+public class AudioStateChangedEventArgs : EventArgs
+{
+    public string State { get; }
+    public AudioStateChangedEventArgs(string state) => State = state;
+}

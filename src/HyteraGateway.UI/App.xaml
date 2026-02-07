@@ -18,6 +18,8 @@
             <converters:BoolToOnlineStatusConverter x:Key="BoolToOnlineStatus"/>
             <converters:CountToVisibilityConverter x:Key="CountToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <converters:BoolToConnectTextConverter x:Key="BoolToConnectTextConverter"/>
+            <converters:BoolToPttColorConverter x:Key="BoolToPttColorConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
