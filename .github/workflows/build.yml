@@ -4,43 +4,72 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: 'HyteraGateway.sln'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
+    - name: Checkout
+      uses: actions/checkout@v4
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
-    
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
     - name: Restore dependencies
-      run: dotnet restore
-    
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+      
     - name: Build
-      run: dotnet build --no-restore --configuration Release
-    
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+      
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal
-    
-    - name: Publish API
-      run: dotnet publish src/HyteraGateway.Api/HyteraGateway.Api.csproj --configuration Release --output ./publish/api
-    
-    - name: Publish Service
-      run: dotnet publish src/HyteraGateway.Service/HyteraGateway.Service.csproj --configuration Release --output ./publish/service
-    
-    - name: Upload API artifact
+      run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./coverage
+        fail_ci_if_error: false
+        
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: hytera-gateway-api
-        path: ./publish/api
+        name: build-artifacts
+        path: |
+          src/*/bin/Release/net8.0*/
+          !src/*/bin/Release/net8.0*/*.pdb
+
+  build-ui:
+    runs-on: windows-latest
+    needs: build
     
-    - name: Upload Service artifact
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Build WPF UI
+      run: dotnet publish src/HyteraGateway.UI/HyteraGateway.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/UI
+      
+    - name: Build Windows Service
+      run: dotnet publish src/HyteraGateway.Service/HyteraGateway.Service.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/Service
+      
+    - name: Build API
+      run: dotnet publish src/HyteraGateway.Api/HyteraGateway.Api.csproj -c Release -r win-x64 --self-contained true -o ./publish/Api
+      
+    - name: Upload publish artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: hytera-gateway-service
-        path: ./publish/service
+        name: publish-artifacts
+        path: ./publish/

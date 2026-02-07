@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Get version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      
+    - name: Restore
+      run: dotnet restore
+      
+    - name: Build Release
+      run: dotnet build --configuration Release -p:Version=${{ steps.version.outputs.VERSION }}
+      
+    - name: Test
+      run: dotnet test --configuration Release --no-build
+      
+    - name: Publish UI (Self-contained)
+      run: |
+        dotnet publish src/HyteraGateway.UI/HyteraGateway.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.VERSION }} -o ./release/HyteraGateway-UI-${{ steps.version.outputs.VERSION }}
+        
+    - name: Publish Service (Self-contained)
+      run: |
+        dotnet publish src/HyteraGateway.Service/HyteraGateway.Service.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.VERSION }} -o ./release/HyteraGateway-Service-${{ steps.version.outputs.VERSION }}
+        
+    - name: Publish API
+      run: |
+        dotnet publish src/HyteraGateway.Api/HyteraGateway.Api.csproj -c Release -r win-x64 -p:Version=${{ steps.version.outputs.VERSION }} -o ./release/HyteraGateway-Api-${{ steps.version.outputs.VERSION }}
+        
+    - name: Create ZIP archives
+      run: |
+        Compress-Archive -Path ./release/HyteraGateway-UI-${{ steps.version.outputs.VERSION }}/* -DestinationPath ./release/HyteraGateway-UI-${{ steps.version.outputs.VERSION }}-win-x64.zip
+        Compress-Archive -Path ./release/HyteraGateway-Service-${{ steps.version.outputs.VERSION }}/* -DestinationPath ./release/HyteraGateway-Service-${{ steps.version.outputs.VERSION }}-win-x64.zip
+        Compress-Archive -Path ./release/HyteraGateway-Api-${{ steps.version.outputs.VERSION }}/* -DestinationPath ./release/HyteraGateway-Api-${{ steps.version.outputs.VERSION }}-win-x64.zip
+      shell: pwsh
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: HyteraGateway v${{ steps.version.outputs.VERSION }}
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        generate_release_notes: true
+        files: |
+          ./release/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
