@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
+using HyteraGateway.Core.Configuration;
 using HyteraGateway.UI.Models;
 
 namespace HyteraGateway.UI.Services;
@@ -146,5 +148,77 @@ public class NetworkDiscoveryService
         {
             return (false, 0, $"Ping error: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Scan a subnet for Hytera radios by testing port 50000
+    /// Used for Ethernet-connected radios like HM785
+    /// </summary>
+    public async Task<List<DiscoveredRadio>> ScanSubnetForRadiosAsync(
+        string subnet,           // e.g., "10.0.0"
+        int startIp = 1,
+        int endIp = 254,
+        int timeoutMs = 500,
+        IProgress<int>? progress = null,
+        CancellationToken ct = default)
+    {
+        var radios = new List<DiscoveredRadio>();
+        var tasks = new List<Task>();
+        var lockObj = new object();
+        
+        for (int i = startIp; i <= endIp; i++)
+        {
+            if (ct.IsCancellationRequested)
+                break;
+                
+            string ip = $"{subnet}.{i}";
+            int index = i;
+            
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    if (await TestRadioConnectionAsync(ip, 50000, timeoutMs))
+                    {
+                        var radio = await IdentifyRadioAsync(ip);
+                        lock (lockObj)
+                        {
+                            radios.Add(radio);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore individual scan errors
+                }
+                finally
+                {
+                    progress?.Report(index - startIp + 1);
+                }
+            }, ct));
+        }
+        
+        await Task.WhenAll(tasks);
+        return radios;
+    }
+    
+    /// <summary>
+    /// Try to identify radio model by connecting and reading response
+    /// </summary>
+    public async Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
+    {
+        // For now, we just return basic info
+        // Future enhancement: query IPSC protocol to get model info
+        await Task.CompletedTask;
+        
+        return new DiscoveredRadio
+        {
+            IpAddress = ipAddress,
+            Port = 50000,
+            ConnectionType = RadioConnectionType.Ethernet,
+            Model = "Unknown (Hytera IPSC)",
+            IsOnline = true,
+            DiscoveredAt = DateTime.Now
+        };
     }
 }

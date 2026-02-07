@@ -20,6 +20,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -147,7 +148,7 @@
                             </Grid.ColumnDefinitions>
 
                             <TextBlock Grid.Column="0" 
-                                      Text="Network Scanner" 
+                                      Text="USB Network Scanner" 
                                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
 
                             <Button Grid.Column="1" 
@@ -202,6 +203,61 @@
                     </StackPanel>
                 </materialDesign:Card>
             </Grid>
+            
+            <!-- Network Radio Scanner (Full Width) -->
+            <materialDesign:Card Grid.Row="2" Margin="0,16,0,0" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Network Radio Scanner" 
+                              Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                              Margin="0,0,0,8"/>
+                    <TextBlock Text="Scan your network for Hytera radios with Ethernet connection (HM785, etc.)" 
+                              Opacity="0.6" 
+                              Margin="0,0,0,16"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBox Grid.Column="0"
+                                Text="{Binding ScanSubnet}" 
+                                materialDesign:HintAssist.Hint="Subnet (e.g., 192.168.1)"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        
+                        <Button Grid.Column="1"
+                               Command="{Binding ScanNetworkCommand}"
+                               IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBooleanConverter}}"
+                               Content="SCAN"
+                               Style="{StaticResource MaterialDesignRaisedButton}"
+                               Margin="8,0"/>
+                        
+                        <ProgressBar Grid.Column="2"
+                                    Value="{Binding ScanProgress}" 
+                                    Maximum="254"
+                                    Height="8"
+                                    Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    VerticalAlignment="Center"/>
+                    </Grid>
+                    
+                    <DataGrid ItemsSource="{Binding DiscoveredRadios}" 
+                             AutoGenerateColumns="False"
+                             CanUserAddRows="False"
+                             CanUserDeleteRows="False"
+                             Margin="0,16,0,0" 
+                             MaxHeight="300"
+                             Visibility="{Binding DiscoveredRadios.Count, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}" Width="*"/>
+                            <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="Auto"/>
+                            <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="*"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding IsOnline, Converter={StaticResource BoolToOnlineStatus}}" Width="Auto"/>
+                            <DataGridTextColumn Header="Discovered" Binding="{Binding DiscoveredAt, StringFormat='{}{0:HH:mm:ss}'}" Width="Auto"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </materialDesign:Card>
         </Grid>
     </ScrollViewer>
 </UserControl>

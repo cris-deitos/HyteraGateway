@@ -36,17 +36,92 @@
                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
                                   Margin="0,0,0,16"/>
 
-                        <ComboBox ItemsSource="{Binding NetworkInterfaces}"
-                                 SelectedItem="{Binding SelectedInterface}"
-                                 DisplayMemberPath="DisplayName"
-                                 materialDesign:HintAssist.Hint="Network Interface"
+                        <!-- Connection Type Selection -->
+                        <ComboBox ItemsSource="{Binding ConnectionTypes}"
+                                 SelectedItem="{Binding SelectedConnectionType}"
+                                 materialDesign:HintAssist.Hint="Connection Type"
                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                  Margin="0,0,0,16"/>
 
-                        <Button Command="{Binding RefreshNetworkInterfacesCommand}"
-                               Content="Scan Network Interfaces"
-                               Style="{StaticResource MaterialDesignOutlinedButton}"
-                               Margin="0,0,0,24"/>
+                        <!-- USB Mode Panel -->
+                        <StackPanel Visibility="{Binding IsUsbMode, Converter={StaticResource BoolToVisibility}}"
+                                   Margin="0,0,0,16">
+                            <TextBlock Text="USB Network Interfaces" 
+                                      FontWeight="SemiBold" 
+                                      Margin="0,0,0,8"/>
+                            
+                            <ComboBox ItemsSource="{Binding NetworkInterfaces}"
+                                     SelectedItem="{Binding SelectedInterface}"
+                                     DisplayMemberPath="DisplayName"
+                                     materialDesign:HintAssist.Hint="Network Interface"
+                                     Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                     Margin="0,0,0,8"/>
+
+                            <Button Command="{Binding RefreshNetworkInterfacesCommand}"
+                                   Content="Refresh USB Interfaces"
+                                   Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        </StackPanel>
+
+                        <!-- Ethernet Mode Panel -->
+                        <StackPanel Visibility="{Binding IsEthernetMode, Converter={StaticResource BoolToVisibility}}"
+                                   Margin="0,0,0,16">
+                            <TextBlock Text="Ethernet Connection" 
+                                      FontWeight="SemiBold" 
+                                      Margin="0,0,0,8"/>
+                            
+                            <TextBlock Text="Enter radio IP address or scan network:" 
+                                      Opacity="0.7" 
+                                      FontSize="12" 
+                                      Margin="0,0,0,8"/>
+                            
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBox Grid.Column="0"
+                                        Text="{Binding ScanSubnet}" 
+                                        materialDesign:HintAssist.Hint="Subnet (e.g., 192.168.1)"
+                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                        Margin="0,0,8,0"/>
+                                
+                                <Button Grid.Column="1"
+                                       Command="{Binding ScanNetworkCommand}"
+                                       IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBooleanConverter}}"
+                                       Content="SCAN"
+                                       Style="{StaticResource MaterialDesignRaisedButton}"/>
+                            </Grid>
+                            
+                            <!-- Progress Bar -->
+                            <ProgressBar Value="{Binding ScanProgress}" 
+                                        Maximum="254"
+                                        Height="4"
+                                        Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Margin="0,0,0,8"/>
+                            
+                            <!-- Discovered Radios List -->
+                            <DataGrid ItemsSource="{Binding DiscoveredRadios}" 
+                                     SelectedItem="{Binding SelectedDiscoveredRadio}"
+                                     AutoGenerateColumns="False"
+                                     CanUserAddRows="False"
+                                     CanUserDeleteRows="False"
+                                     SelectionMode="Single"
+                                     MaxHeight="200"
+                                     Margin="0,0,0,8"
+                                     Visibility="{Binding DiscoveredRadios.Count, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}" Width="*"/>
+                                    <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="*"/>
+                                    <DataGridTextColumn Header="Status" Binding="{Binding IsOnline, Converter={StaticResource BoolToOnlineStatus}}" Width="Auto"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            
+                            <Button Content="Use Selected Radio" 
+                                   Command="{Binding UseSelectedRadioCommand}"
+                                   IsEnabled="{Binding SelectedDiscoveredRadio, Converter={StaticResource NullToBool}}"
+                                   Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        </StackPanel>
 
                         <TextBox Text="{Binding RadioIpAddress}" 
                                 materialDesign:HintAssist.Hint="Radio IP Address"

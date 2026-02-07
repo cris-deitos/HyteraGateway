@@ -13,6 +13,9 @@
             
             <!-- Converters -->
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            <converters:NullToBoolConverter x:Key="NullToBool"/>
+            <converters:BoolToOnlineStatusConverter x:Key="BoolToOnlineStatus"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>

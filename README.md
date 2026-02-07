@@ -1,16 +1,39 @@
 # HyteraGateway
 
-A modern .NET 8 gateway for interfacing with Hytera MD785i DMR radios via USB NCM connection.
+A modern .NET 8 gateway for interfacing with Hytera DMR radios via USB NCM or direct Ethernet connection.
 
 ## Features
 
 - **USB NCM Connection**: Connect to Hytera MD785i radios via USB network interface
+- **Ethernet Connection**: Connect to Hytera HM785 and other radios with built-in Ethernet ports
+- **Network Scanning**: Discover Ethernet-connected radios on your LAN
 - **Real-Time Events**: Capture PTT, calls, GPS positions, emergency alerts, and text messages
 - **Audio Recording**: Record and stream AMBE+2 codec audio from radio transmissions
 - **MySQL Database**: Store transmissions, GPS positions, and events in EasyVol schema
 - **REST API**: Comprehensive API for radio control and monitoring
 - **WebSocket Events**: Real-time event streaming via SignalR
 - **Windows Service**: Run as a background service for continuous monitoring
+
+## Supported Radio Models
+
+### USB Connection (NCM/RNDIS)
+- **Hytera MD785i** - Mobile radio with USB port
+- **Hytera MD785G** - Mobile radio with GPS and USB
+- Other Hytera DMR radios with USB data cable
+
+### Ethernet Connection (Direct IP)
+- **Hytera HM785** - Mobile radio with built-in Ethernet
+- **Hytera HR1065** - Repeater with network interface
+- Other Hytera devices with RJ45 Ethernet port
+
+### Connection Configuration
+
+| Radio Type | Connection | Typical IP | Configuration |
+|------------|------------|------------|---------------|
+| MD785i (USB NCM) | USB Cable | 192.168.1.1 | Auto-detected via USB interface |
+| MD785i (USB RNDIS) | USB Cable | 192.168.42.1 | Auto-detected via USB interface |
+| HM785 (Ethernet) | RJ45 Cable | DHCP or Static | Manual IP or network scan |
+| HR1065 (Ethernet) | RJ45 Cable | DHCP or Static | Manual IP or network scan |
 
 ### Phase 2.5 - Production Features (NEW)
 
@@ -41,7 +64,7 @@ The solution is organized into multiple projects:
 
 - .NET 8.0 SDK or later
 - MySQL 8.0 or later
-- Hytera MD785i radio with USB NCM cable
+- Hytera radio with USB NCM cable or Ethernet connection
 
 ### Configuration
 
@@ -54,6 +77,7 @@ Edit `appsettings.json` in the API or Service project:
   },
   "HyteraGateway": {
     "Radio": {
+      "ConnectionType": "Auto",
       "IpAddress": "192.168.1.1",
       "ControlPort": 50000,
       "AudioPort": 50001,
