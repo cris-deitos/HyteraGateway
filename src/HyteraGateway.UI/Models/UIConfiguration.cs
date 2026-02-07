@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using HyteraGateway.Core.Configuration;
+
 namespace HyteraGateway.UI.Models;
 
 /// <summary>
@@ -6,11 +9,18 @@ namespace HyteraGateway.UI.Models;
 public class UIConfiguration
 {
     // Radio Settings
+    public RadioConnectionType ConnectionType { get; set; } = RadioConnectionType.Auto;
     public string RadioIpAddress { get; set; } = "192.168.1.1";
     public int RadioControlPort { get; set; } = 50000;
     public int RadioAudioPort { get; set; } = 50001;
     public bool AutoReconnect { get; set; } = true;
     public int DispatcherId { get; set; } = 1;
+    
+    // Last scan subnet for convenience
+    public string LastScanSubnet { get; set; } = "192.168.1";
+    
+    // Saved radios list (for quick connect)
+    public List<SavedRadio> SavedRadios { get; set; } = new();
 
     // Database Settings
     public string DbHost { get; set; } = "localhost";

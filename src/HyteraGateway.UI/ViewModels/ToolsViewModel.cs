@@ -49,6 +49,16 @@ public partial class ToolsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isScanning;
     
+    // Network radio scanner
+    [ObservableProperty]
+    private string _scanSubnet = "192.168.1";
+    
+    [ObservableProperty]
+    private ObservableCollection<DiscoveredRadio> _discoveredRadios = new();
+    
+    [ObservableProperty]
+    private int _scanProgress;
+    
     [ObservableProperty]
     private string _serviceStatus = "Unknown";
     
@@ -216,6 +226,34 @@ public partial class ToolsViewModel : ObservableObject
         catch (Exception ex)
         {
             Debug.WriteLine($"Error scanning interfaces: {ex.Message}");
+        }
+        finally
+        {
+            IsScanning = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ScanNetwork()
+    {
+        IsScanning = true;
+        ScanProgress = 0;
+        DiscoveredRadios.Clear();
+
+        try
+        {
+            var progress = new Progress<int>(p => ScanProgress = p);
+            var radios = await _networkDiscovery.ScanSubnetForRadiosAsync(
+                ScanSubnet, 1, 254, 500, progress);
+            
+            foreach (var radio in radios)
+            {
+                DiscoveredRadios.Add(radio);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error scanning network: {ex.Message}");
         }
         finally
         {

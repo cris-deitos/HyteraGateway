@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HyteraGateway.Core.Configuration;
 using HyteraGateway.UI.Models;
 using HyteraGateway.UI.Services;
 using Microsoft.Win32;
@@ -15,6 +16,17 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly ConfigurationService _config;
     private readonly NetworkDiscoveryService _networkDiscovery;
+    
+    // Connection type
+    public RadioConnectionType[] ConnectionTypes { get; } = Enum.GetValues<RadioConnectionType>();
+    
+    [ObservableProperty]
+    private RadioConnectionType _selectedConnectionType = RadioConnectionType.USB;
+    
+    // Computed visibility properties
+    public bool IsUsbMode => SelectedConnectionType == RadioConnectionType.USB;
+    public bool IsEthernetMode => SelectedConnectionType == RadioConnectionType.Ethernet;
+    public bool IsAutoMode => SelectedConnectionType == RadioConnectionType.Auto;
     
     // Radio settings
     [ObservableProperty]
@@ -37,6 +49,22 @@ public partial class SettingsViewModel : ObservableObject
     
     [ObservableProperty]
     private NetworkInterfaceInfo? _selectedInterface;
+    
+    // Network scanning
+    [ObservableProperty]
+    private string _scanSubnet = "192.168.1";
+    
+    [ObservableProperty]
+    private ObservableCollection<DiscoveredRadio> _discoveredRadios = new();
+    
+    [ObservableProperty]
+    private DiscoveredRadio? _selectedDiscoveredRadio;
+    
+    [ObservableProperty]
+    private bool _isScanning;
+    
+    [ObservableProperty]
+    private int _scanProgress;
     
     // Database settings
     [ObservableProperty]
@@ -126,11 +154,13 @@ public partial class SettingsViewModel : ObservableObject
     {
         var cfg = _config.Configuration;
         
+        SelectedConnectionType = cfg.ConnectionType;
         RadioIpAddress = cfg.RadioIpAddress;
         RadioControlPort = cfg.RadioControlPort;
         RadioAudioPort = cfg.RadioAudioPort;
         AutoReconnect = cfg.AutoReconnect;
         DispatcherId = cfg.DispatcherId;
+        ScanSubnet = cfg.LastScanSubnet;
         
         DbHost = cfg.DbHost;
         DbPort = cfg.DbPort;
@@ -167,11 +197,13 @@ public partial class SettingsViewModel : ObservableObject
             
             var cfg = _config.Configuration;
             
+            cfg.ConnectionType = SelectedConnectionType;
             cfg.RadioIpAddress = RadioIpAddress;
             cfg.RadioControlPort = RadioControlPort;
             cfg.RadioAudioPort = RadioAudioPort;
             cfg.AutoReconnect = AutoReconnect;
             cfg.DispatcherId = DispatcherId;
+            cfg.LastScanSubnet = ScanSubnet;
             
             cfg.DbHost = DbHost;
             cfg.DbPort = DbPort;
@@ -299,6 +331,63 @@ public partial class SettingsViewModel : ObservableObject
         if (value != null && !string.IsNullOrEmpty(value.GatewayAddress))
         {
             RadioIpAddress = value.GatewayAddress;
+        }
+    }
+    
+    partial void OnSelectedConnectionTypeChanged(RadioConnectionType value)
+    {
+        OnPropertyChanged(nameof(IsUsbMode));
+        OnPropertyChanged(nameof(IsEthernetMode));
+        OnPropertyChanged(nameof(IsAutoMode));
+    }
+    
+    [RelayCommand]
+    private async Task ScanNetworkAsync()
+    {
+        IsScanning = true;
+        ScanProgress = 0;
+        DiscoveredRadios.Clear();
+        
+        try
+        {
+            var progress = new Progress<int>(p => ScanProgress = p);
+            var radios = await _networkDiscovery.ScanSubnetForRadiosAsync(
+                ScanSubnet, 1, 254, 500, progress);
+            
+            foreach (var radio in radios)
+            {
+                DiscoveredRadios.Add(radio);
+            }
+            
+            if (DiscoveredRadios.Count > 0)
+            {
+                StatusMessage = $"Found {DiscoveredRadios.Count} radio(s)";
+            }
+            else
+            {
+                StatusMessage = "No radios found on subnet";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Scan error: {ex.Message}";
+        }
+        finally
+        {
+            IsScanning = false;
+            await Task.Delay(3000);
+            StatusMessage = "";
+        }
+    }
+    
+    [RelayCommand]
+    private void UseSelectedRadio()
+    {
+        if (SelectedDiscoveredRadio != null)
+        {
+            RadioIpAddress = SelectedDiscoveredRadio.IpAddress;
+            SelectedConnectionType = SelectedDiscoveredRadio.ConnectionType;
+            StatusMessage = $"Using radio at {SelectedDiscoveredRadio.IpAddress}";
         }
     }
 }
