@@ -1,5 +1,8 @@
 # HyteraGateway
 
+[![Build and Test](https://github.com/cris-deitos/HyteraGateway/actions/workflows/build.yml/badge.svg)](https://github.com/cris-deitos/HyteraGateway/actions/workflows/build.yml)
+[![Release](https://github.com/cris-deitos/HyteraGateway/actions/workflows/release.yml/badge.svg)](https://github.com/cris-deitos/HyteraGateway/actions/workflows/release.yml)
+
 A modern .NET 8 gateway for interfacing with Hytera DMR radios via USB NCM or direct Ethernet connection.
 
 ## Features
