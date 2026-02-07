@@ -125,6 +125,11 @@ public class NetworkDiscoveryService
     /// </summary>
     public async Task<(bool Success, long RoundtripTime, string Message)> PingAsync(string ipAddress, int timeoutMs = 3000)
     {
+        if (string.IsNullOrWhiteSpace(ipAddress))
+        {
+            return (false, 0, "IP address cannot be empty");
+        }
+
         try
         {
             using var ping = new Ping();

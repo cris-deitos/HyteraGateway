@@ -176,7 +176,12 @@ public partial class ToolsViewModel : ObservableObject
             if (bytes.Length >= 4)
             {
                 sb.AppendLine("First 4 bytes as uint32 (little-endian): " + BitConverter.ToUInt32(bytes, 0));
-                sb.AppendLine("First 4 bytes as uint32 (big-endian): " + BitConverter.ToUInt32(bytes.Reverse().ToArray(), 0));
+                
+                // Create a copy of just the first 4 bytes and reverse them for big-endian
+                var first4Bytes = new byte[4];
+                Array.Copy(bytes, 0, first4Bytes, 0, 4);
+                Array.Reverse(first4Bytes);
+                sb.AppendLine("First 4 bytes as uint32 (big-endian): " + BitConverter.ToUInt32(first4Bytes, 0));
             }
 
             PacketAnalysisResult = sb.ToString();

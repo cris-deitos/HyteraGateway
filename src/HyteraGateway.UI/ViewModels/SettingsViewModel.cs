@@ -201,7 +201,12 @@ public partial class SettingsViewModel : ObservableObject
             _config.SaveConfiguration();
             
             StatusMessage = "Settings saved successfully!";
-            Task.Delay(3000).ContinueWith(_ => Application.Current.Dispatcher.Invoke(() => StatusMessage = ""));
+            
+            // Clear status message after 3 seconds
+            _ = Task.Delay(3000).ContinueWith(_ => 
+            {
+                Application.Current.Dispatcher.Invoke(() => StatusMessage = "");
+            }, TaskScheduler.Default);
         }
         catch (Exception ex)
         {
@@ -249,11 +254,15 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void BrowseStoragePath()
     {
+        // Note: WPF doesn't have a built-in FolderBrowserDialog
+        // Using OpenFileDialog workaround for folder selection
+        // In a production app, consider using Windows.Forms.FolderBrowserDialog or a third-party dialog
         var dialog = new OpenFileDialog
         {
             CheckFileExists = false,
             CheckPathExists = true,
-            FileName = "Select Folder"
+            FileName = "Select Folder",
+            Title = "Select Storage Folder"
         };
 
         if (dialog.ShowDialog() == true)

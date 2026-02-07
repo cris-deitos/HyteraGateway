@@ -143,7 +143,7 @@ public partial class LogsViewModel : ObservableObject
                     sb.AppendLine("Timestamp,Level,Source,Message");
                     foreach (var log in FilteredLogs)
                     {
-                        sb.AppendLine($"{log.Timestamp:yyyy-MM-dd HH:mm:ss},{log.Level},{log.Source},\"{log.Message.Replace("\"", "\"\"")}\"");
+                        sb.AppendLine(FormatCsvLine(log));
                     }
                 }
                 else
@@ -161,6 +161,31 @@ public partial class LogsViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine($"Failed to export logs: {ex.Message}");
         }
+    }
+
+    private static string FormatCsvLine(LogEntry log)
+    {
+        // Escape CSV fields properly
+        var timestamp = log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
+        var level = EscapeCsvField(log.Level);
+        var source = EscapeCsvField(log.Source);
+        var message = EscapeCsvField(log.Message);
+        
+        return $"{timestamp},{level},{source},{message}";
+    }
+
+    private static string EscapeCsvField(string field)
+    {
+        if (string.IsNullOrEmpty(field))
+            return "";
+        
+        // If field contains comma, newline, or quote, wrap in quotes and escape quotes
+        if (field.Contains(',') || field.Contains('\n') || field.Contains('"'))
+        {
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        }
+        
+        return field;
     }
 
     [RelayCommand]
