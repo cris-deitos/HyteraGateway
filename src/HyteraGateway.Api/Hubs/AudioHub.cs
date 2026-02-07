@@ -65,15 +65,20 @@ public class AudioHub : Hub
             // Resample to 8kHz
             byte[] pcm8kHz = AudioPipeline.Resample(pcm48kHz, 8000);
             
-            // TODO: Encode to AMBE and send to radio
-            // For now, just log
-            _logger.LogDebug("Received {Bytes} bytes of audio for radio {RadioId}", opusData.Length, targetRadioId);
+            // AMBE encoding not available - mbelib is decode-only
+            // Would require DVSI hardware or licensed AMBE encoder for TX
+            _logger.LogWarning("TX audio requested for radio {RadioId}, but AMBE encoding not available (mbelib is decode-only)", targetRadioId);
+            
+            // Notify client that TX is not available
+            await Clients.Caller.SendAsync("TxNotAvailable", 
+                "Audio transmission not available - AMBE encoder not configured. Receive-only mode.");
             
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process audio from client");
+            await Clients.Caller.SendAsync("TxError", "Failed to process audio data");
         }
     }
     
