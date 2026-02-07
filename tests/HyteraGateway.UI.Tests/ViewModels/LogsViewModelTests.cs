@@ -50,8 +50,10 @@ public class LogsViewModelTests
     [Theory]
     [InlineData("[ERROR] Test message", LogLevel.Error)]
     [InlineData("[ERR] Test message", LogLevel.Error)]
+    [InlineData("[error] Test message", LogLevel.Error)]
     [InlineData("[WARNING] Test message", LogLevel.Warning)]
     [InlineData("[WARN] Test message", LogLevel.Warning)]
+    [InlineData("[warn] Test message", LogLevel.Warning)]
     [InlineData("[INFO] Test message", LogLevel.Info)]
     [InlineData("Plain message", LogLevel.Info)]
     public void ParseLogEntry_ShouldDetectCorrectLevel(string message, LogLevel expectedLevel)
@@ -59,9 +61,8 @@ public class LogsViewModelTests
         // Arrange
         var viewModel = new LogsViewModel(_mockSignalR.Object);
         
-        // Act - Use reflection to call private method
-        var method = typeof(LogsViewModel).GetMethod("ParseLogEntry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var entry = (LogEntry)method!.Invoke(viewModel, new object[] { message })!;
+        // Act - Call internal method directly via InternalsVisibleTo
+        var entry = viewModel.ParseLogEntry(message);
         
         // Assert
         entry.Level.Should().Be(expectedLevel);
@@ -103,5 +104,24 @@ public class LogsViewModelTests
         var filtered = viewModel.FilteredLogs;
         filtered.Should().HaveCount(1);
         filtered.First().Message.Should().ContainEquivalentOf("connection");
+    }
+
+    [Fact]
+    public void FilteredLogs_ShowsAllLogsWhenAllFiltersDisabled()
+    {
+        // Arrange
+        var viewModel = new LogsViewModel(_mockSignalR.Object);
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Info, Message = "Info message" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Warning, Message = "Warning message" });
+        viewModel.Logs.Add(new LogEntry { Level = LogLevel.Error, Message = "Error message" });
+        
+        // Act - Disable all filters
+        viewModel.ShowInfo = false;
+        viewModel.ShowWarning = false;
+        viewModel.ShowError = false;
+        
+        // Assert - All logs should still be shown
+        var filtered = viewModel.FilteredLogs;
+        filtered.Should().HaveCount(3);
     }
 }

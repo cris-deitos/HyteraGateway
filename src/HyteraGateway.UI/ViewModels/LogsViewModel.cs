@@ -60,13 +60,15 @@ public partial class LogsViewModel : ObservableObject
         });
     }
     
-    private LogEntry ParseLogEntry(string message)
+    internal LogEntry ParseLogEntry(string message)
     {
         // Parse log level from message format: "[LEVEL] message"
         var level = LogLevel.Info;
-        if (message.Contains("[ERROR]") || message.Contains("[ERR]"))
+        if (message.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase) || 
+            message.Contains("[ERR]", StringComparison.OrdinalIgnoreCase))
             level = LogLevel.Error;
-        else if (message.Contains("[WARNING]") || message.Contains("[WARN]"))
+        else if (message.Contains("[WARNING]", StringComparison.OrdinalIgnoreCase) || 
+                 message.Contains("[WARN]", StringComparison.OrdinalIgnoreCase))
             level = LogLevel.Warning;
             
         return new LogEntry
@@ -79,9 +81,13 @@ public partial class LogsViewModel : ObservableObject
 
     private void UpdateFilteredLogs()
     {
+        // If all level filters are disabled, show all logs
+        var showAll = !ShowInfo && !ShowWarning && !ShowError;
+        
         var filtered = Logs.Where(l => 
             (string.IsNullOrEmpty(FilterText) || l.Message.Contains(FilterText, StringComparison.OrdinalIgnoreCase)) &&
-            ((ShowInfo && l.Level == LogLevel.Info) ||
+            (showAll || 
+             (ShowInfo && l.Level == LogLevel.Info) ||
              (ShowWarning && l.Level == LogLevel.Warning) ||
              (ShowError && l.Level == LogLevel.Error))
         );
