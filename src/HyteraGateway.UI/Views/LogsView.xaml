@@ -3,121 +3,109 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     
-    <Grid Margin="16">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
+        
         <!-- Toolbar -->
-        <materialDesign:Card Grid.Row="0" Padding="8" Margin="0,0,0,8">
+        <materialDesign:Card Grid.Row="0" Margin="16,16,16,8" Padding="16">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
-                <!-- Title -->
-                <TextBlock Grid.Column="0" Text="Logs" 
-                          Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
-                          VerticalAlignment="Center" Margin="8,0"/>
-
-                <!-- Filter Text -->
-                <TextBox Grid.Column="1" 
-                        Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" 
-                        materialDesign:HintAssist.Hint="Search logs..."
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                        Margin="8,0" MinWidth="200"/>
-
-                <!-- Log Level Filter -->
-                <ComboBox Grid.Column="2" 
-                         ItemsSource="{Binding LogLevels}"
-                         SelectedItem="{Binding SelectedLogLevel}"
-                         materialDesign:HintAssist.Hint="Level"
-                         Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                         Width="120" Margin="8,0"/>
-
-                <!-- Auto Scroll Toggle -->
-                <ToggleButton Grid.Column="3" 
-                             IsChecked="{Binding AutoScroll}"
-                             ToolTip="Auto Scroll"
-                             Style="{StaticResource MaterialDesignActionToggleButton}"
-                             Margin="8,0">
-                    <materialDesign:PackIcon Kind="ArrowDown"/>
-                </ToggleButton>
-
-                <!-- Clear Button -->
-                <Button Grid.Column="4" 
-                       Command="{Binding ClearLogsCommand}"
-                       ToolTip="Clear Logs"
-                       Style="{StaticResource MaterialDesignIconButton}"
-                       Margin="4,0">
-                    <materialDesign:PackIcon Kind="Delete"/>
-                </Button>
-
-                <!-- Export Button -->
-                <Button Grid.Column="5" 
-                       Command="{Binding ExportLogsCommand}"
-                       ToolTip="Export Logs"
-                       Style="{StaticResource MaterialDesignIconButton}"
-                       Margin="4,0">
-                    <materialDesign:PackIcon Kind="Download"/>
-                </Button>
+                
+                <StackPanel Orientation="Horizontal" Grid.Column="0">
+                    <!-- Search -->
+                    <TextBox Width="250" Margin="0,0,16,0"
+                             materialDesign:HintAssist.Hint="Search logs..."
+                             Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"/>
+                    
+                    <!-- Level Filters -->
+                    <CheckBox Content="Info" IsChecked="{Binding ShowInfo}" Margin="0,0,8,0"/>
+                    <CheckBox Content="Warning" IsChecked="{Binding ShowWarning}" Margin="0,0,8,0"/>
+                    <CheckBox Content="Error" IsChecked="{Binding ShowError}" Margin="0,0,16,0"/>
+                    
+                    <!-- Auto-scroll -->
+                    <CheckBox Content="Auto-scroll" IsChecked="{Binding AutoScroll}"/>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Grid.Column="1">
+                    <Button Command="{Binding ExportLogsCommand}" Margin="0,0,8,0"
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Export" Margin="0,0,8,0"/>
+                            <TextBlock Text="Export"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ClearLogsCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Delete" Margin="0,0,8,0"/>
+                            <TextBlock Text="Clear"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </materialDesign:Card>
-
-        <!-- Logs DataGrid -->
-        <materialDesign:Card Grid.Row="1">
-            <DataGrid ItemsSource="{Binding FilteredLogs}"
-                     AutoGenerateColumns="False"
-                     CanUserAddRows="False"
-                     CanUserDeleteRows="False"
-                     IsReadOnly="True"
-                     SelectionMode="Single"
-                     HeadersVisibility="Column"
-                     GridLinesVisibility="Horizontal"
-                     materialDesign:DataGridAssist.CellPadding="8,4"
-                     materialDesign:DataGridAssist.ColumnHeaderPadding="8">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Timestamp" 
-                                       Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}"
-                                       Width="140"/>
-                    <DataGridTextColumn Header="Level" 
-                                       Binding="{Binding Level}"
-                                       Width="80">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Level}" Value="Error">
-                                        <Setter Property="Foreground" Value="#F44336"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Level}" Value="Warning">
-                                        <Setter Property="Foreground" Value="#FF9800"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Level}" Value="Info">
-                                        <Setter Property="Foreground" Value="#2196F3"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Level}" Value="Debug">
-                                        <Setter Property="Foreground" Value="#9E9E9E"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Source" 
-                                       Binding="{Binding Source}"
-                                       Width="120"/>
-                    <DataGridTextColumn Header="Message" 
-                                       Binding="{Binding Message}"
-                                       Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
+        
+        <!-- Log List -->
+        <materialDesign:Card Grid.Row="1" Margin="16,8,16,8">
+            <ListView ItemsSource="{Binding FilteredLogs}" 
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      ScrollViewer.CanContentScroll="True">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="8,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0" 
+                                       Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                       Opacity="0.6" FontFamily="Consolas"/>
+                            
+                            <TextBlock Grid.Column="1" Text="{Binding Level}" FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                                <Setter Property="Foreground" Value="Orange"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="Info">
+                                                <Setter Property="Foreground" Value="Green"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            
+                            <TextBlock Grid.Column="2" Text="{Binding Message}" 
+                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                       FontFamily="Consolas"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </materialDesign:Card>
+        
+        <!-- Status Bar -->
+        <materialDesign:Card Grid.Row="2" Margin="16,8,16,16" Padding="16">
+            <TextBlock>
+                <Run Text="Total entries: "/>
+                <Run Text="{Binding Logs.Count, Mode=OneWay}"/>
+                <Run Text=" | Filtered: "/>
+                <Run Text="{Binding FilteredLogs.Count, Mode=OneWay}"/>
+            </TextBlock>
         </materialDesign:Card>
     </Grid>
 </UserControl>
