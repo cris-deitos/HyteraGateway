@@ -41,7 +41,7 @@ jobs:
         fail_ci_if_error: false
         
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: build-artifacts
         path: |
@@ -73,7 +73,7 @@ jobs:
       run: dotnet publish src/HyteraGateway.Api/HyteraGateway.Api.csproj -c Release -r win-x64 --self-contained true -o ./publish/Api
       
     - name: Upload publish artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: publish-artifacts
         path: ./publish/
