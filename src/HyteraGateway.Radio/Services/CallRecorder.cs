@@ -1,6 +1,7 @@
 using HyteraGateway.Radio.Protocol.DMR;
 using Microsoft.Extensions.Logging;
 using NAudio.Wave;
+using NAudio.Lame;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using HyteraGateway.Audio.Codecs.Ambe;
@@ -263,66 +264,80 @@ public class CallRecorder : IDisposable
     {
         try
         {
-            // MP3 conversion requires additional dependencies (NAudio.Lame or Windows Media Foundation)
-            // For now, we only support WAV format with proper AMBE decoding
-            if (Format.ToLowerInvariant() == "mp3")
-            {
-                _logger.LogWarning("MP3 format requested but not fully implemented, saving as WAV instead");
-                filePath = Path.ChangeExtension(filePath, ".wav");
-            }
-
             var waveFormat = new WaveFormat(8000, 16, 1); // 8kHz, 16-bit, mono
+            bool isMp3 = Format.ToLowerInvariant() == "mp3";
 
             await Task.Run(() =>
             {
-                using var writer = new WaveFileWriter(filePath, waveFormat);
-                
-                if (_ambeCodec != null && recording.Frames.Count > 0)
+                // First, decode AMBE frames to PCM and create WAV in memory
+                byte[] wavBytes;
+                using (var memoryStream = new MemoryStream())
                 {
-                    _logger.LogDebug("Decoding {FrameCount} AMBE frames using codec", recording.Frames.Count);
-                    
-                    // Decode each AMBE frame to PCM
-                    foreach (var frame in recording.Frames)
+                    using (var tempWriter = new WaveFileWriter(memoryStream, waveFormat))
                     {
-                        try
+                        if (_ambeCodec != null && recording.Frames.Count > 0)
                         {
-                            // Decode AMBE frame to PCM (returns 320 bytes = 160 samples)
-                            byte[] pcmData = _ambeCodec.DecodeToPcm(frame.AmbeData);
+                            _logger.LogDebug("Decoding {FrameCount} AMBE frames using codec", recording.Frames.Count);
                             
-                            if (pcmData != null && pcmData.Length > 0)
+                            foreach (var frame in recording.Frames)
                             {
-                                writer.Write(pcmData, 0, pcmData.Length);
-                            }
-                            else
-                            {
-                                // Write silence if decode returned empty data
-                                byte[] silence = new byte[320]; // 160 samples * 2 bytes
-                                writer.Write(silence, 0, silence.Length);
+                                try
+                                {
+                                    byte[] pcmData = _ambeCodec.DecodeToPcm(frame.AmbeData);
+                                    
+                                    if (pcmData != null && pcmData.Length > 0)
+                                    {
+                                        tempWriter.Write(pcmData, 0, pcmData.Length);
+                                    }
+                                    else
+                                    {
+                                        byte[] silence = new byte[320];
+                                        tempWriter.Write(silence, 0, silence.Length);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Failed to decode AMBE frame, writing silence");
+                                    byte[] silence = new byte[320];
+                                    tempWriter.Write(silence, 0, silence.Length);
+                                }
                             }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            _logger.LogWarning(ex, "Failed to decode AMBE frame, writing silence");
-                            // Write silence for this frame on error (graceful degradation)
-                            byte[] silence = new byte[320]; // 160 samples * 2 bytes
-                            writer.Write(silence, 0, silence.Length);
+                            _logger.LogWarning("No AMBE codec available or no frames, creating silent audio");
+                            var duration = recording.EndTime - recording.StartTime;
+                            var sampleCount = (int)(waveFormat.SampleRate * duration.TotalSeconds);
+                            var silenceBuffer = new byte[sampleCount * 2];
+                            tempWriter.Write(silenceBuffer, 0, silenceBuffer.Length);
                         }
-                    }
+                    } // tempWriter is disposed here, flushes WAV header
+                    
+                    // Get the WAV bytes before memoryStream is disposed
+                    wavBytes = memoryStream.ToArray();
+                }
+
+                // Now write to final format
+                if (isMp3)
+                {
+                    // Convert to MP3 using LAME
+                    using var wavStream = new MemoryStream(wavBytes);
+                    using var reader = new WaveFileReader(wavStream);
+                    using var mp3Writer = new LameMP3FileWriter(filePath, reader.WaveFormat, LAMEPreset.STANDARD);
+                    reader.CopyTo(mp3Writer);
+                    _logger.LogDebug("Saved recording as MP3: {FilePath}", filePath);
                 }
                 else
                 {
-                    // No codec available or no frames - create silent WAV
-                    _logger.LogWarning("No AMBE codec available or no frames, creating silent WAV");
-                    var duration = recording.EndTime - recording.StartTime;
-                    var sampleCount = (int)(waveFormat.SampleRate * duration.TotalSeconds);
-                    var silenceBuffer = new byte[sampleCount * 2]; // 16-bit = 2 bytes per sample
-                    writer.Write(silenceBuffer, 0, silenceBuffer.Length);
+                    // Save as WAV
+                    File.WriteAllBytes(filePath, wavBytes);
+                    _logger.LogDebug("Saved recording as WAV: {FilePath}", filePath);
                 }
                 
             }, cancellationToken);
 
-            _logger.LogDebug("Converted {FrameCount} AMBE frames to WAV for call {CallId}",
-                recording.Frames.Count, recording.CallId);
+            _logger.LogDebug("Converted {FrameCount} AMBE frames to {Format} for call {CallId}",
+                recording.Frames.Count, Format.ToUpperInvariant(), recording.CallId);
 
             return true;
         }
