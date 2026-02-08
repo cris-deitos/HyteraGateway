@@ -9,7 +9,7 @@ namespace HyteraGateway.UI.ViewModels;
 
 public partial class AudioControlViewModel : ObservableObject
 {
-    private readonly AudioService _audioService;
+    private readonly IAudioService _audioService;
 
     [ObservableProperty]
     private bool _isConnected;
@@ -38,7 +38,7 @@ public partial class AudioControlViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedTalkGroupId = 9; // Default TG
 
-    public AudioControlViewModel(AudioService audioService)
+    public AudioControlViewModel(IAudioService audioService)
     {
         _audioService = audioService;
         _audioService.StateChanged += OnStateChanged;

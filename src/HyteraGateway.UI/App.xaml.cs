@@ -29,7 +29,7 @@ public partial class App : Application
         services.AddSingleton<ApiService>();
         services.AddSingleton<ConfigurationService>();
         services.AddSingleton<NetworkDiscoveryService>();
-        services.AddSingleton<AudioService>();
+        services.AddSingleton<IAudioService, AudioService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
