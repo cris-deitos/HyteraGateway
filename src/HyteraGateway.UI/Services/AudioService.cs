@@ -151,14 +151,9 @@ public class AudioService : IAudioService
             
             if (samplesDecoded > 0)
             {
-                // Convert short[] to byte[] for NAudio
+                // Convert short[] to byte[] for NAudio using Buffer.BlockCopy for efficiency
                 byte[] pcmBytes = new byte[samplesDecoded * 2];
-                for (int i = 0; i < samplesDecoded; i++)
-                {
-                    short sample = pcmBuffer[i];
-                    pcmBytes[i * 2] = (byte)(sample & 0xFF);
-                    pcmBytes[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
-                }
+                Buffer.BlockCopy(pcmBuffer, 0, pcmBytes, 0, samplesDecoded * 2);
                 
                 // Apply volume
                 byte[] adjusted = ApplyVolume(pcmBytes, Volume);
