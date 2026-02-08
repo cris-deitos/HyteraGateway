@@ -59,8 +59,29 @@ builder.Services.AddSingleton<IRadioService, HyteraConnectionService>();
 builder.Services.AddScoped<TransmissionRepository>();
 builder.Services.AddScoped<PositionRepository>();
 
-// Register audio services
-builder.Services.AddSingleton<IAmbeCodec, MbelibAmbeCodec>();
+// Register audio services with graceful fallback
+// Try to use mbelib if available, otherwise fallback to placeholder (silence)
+builder.Services.AddSingleton<IAmbeCodec>(serviceProvider =>
+{
+    var logger = serviceProvider.GetRequiredService<ILogger<MbelibAmbeCodec>>();
+    try
+    {
+        var codec = new MbelibAmbeCodec(logger);
+        logger.LogInformation("Using MbelibAmbeCodec for AMBE audio decoding");
+        return codec;
+    }
+    catch (DllNotFoundException ex)
+    {
+        logger.LogWarning(ex, "mbelib not found, falling back to placeholder codec (audio will be silent). " +
+                              "To enable audio decoding, install mbelib. See docs/MBELIB_SETUP.md for instructions.");
+        return new AmbeCodec();
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to initialize MbelibAmbeCodec, falling back to placeholder codec");
+        return new AmbeCodec();
+    }
+});
 builder.Services.AddSingleton<AudioStreamManager>();
 builder.Services.AddSingleton<AudioCaptureService>();
 

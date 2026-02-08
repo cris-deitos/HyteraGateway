@@ -3,7 +3,7 @@ namespace HyteraGateway.Audio.Codecs.Ambe;
 /// <summary>
 /// AMBE+2 codec for encoding/decoding DMR audio
 /// 
-/// IMPORTANT: This is a PLACEHOLDER implementation.
+/// IMPORTANT: This is a PLACEHOLDER implementation that returns silence.
 /// AMBE+2 is a proprietary codec owned by Digital Voice Systems, Inc. (DVSI).
 /// 
 /// Integration Options:
@@ -23,7 +23,7 @@ namespace HyteraGateway.Audio.Codecs.Ambe;
 /// - Frame duration: 60ms
 /// - Samples per frame: 480 (60ms * 8000 Hz / 1000)
 /// </summary>
-public class AmbeCodec
+public class AmbeCodec : IAmbeCodec
 {
     private const int AMBE_FRAME_SIZE = 33; // bytes
     private const int PCM_SAMPLES_PER_FRAME = 480; // samples
@@ -65,7 +65,7 @@ public class AmbeCodec
     /// <returns>AMBE+2 encoded data (33 bytes)</returns>
     /// <exception cref="ArgumentException">Thrown if input data is wrong size</exception>
     /// <exception cref="NotImplementedException">Always thrown - codec not implemented</exception>
-    public byte[] EncodeToPcm(byte[] pcmData)
+    public byte[] EncodeFromPcm(byte[] pcmData)
     {
         if (pcmData.Length != PCM_FRAME_SIZE)
         {

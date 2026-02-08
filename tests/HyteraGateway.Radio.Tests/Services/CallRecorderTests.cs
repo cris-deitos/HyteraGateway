@@ -1,3 +1,4 @@
+using HyteraGateway.Audio.Codecs.Ambe;
 using HyteraGateway.Radio.Protocol.DMR;
 using HyteraGateway.Radio.Services;
 using Microsoft.Extensions.Logging;
@@ -8,13 +9,20 @@ namespace HyteraGateway.Radio.Tests.Services;
 public class CallRecorderTests : IDisposable
 {
     private readonly Mock<ILogger<CallRecorder>> _mockLogger;
+    private readonly Mock<IAmbeCodec> _mockCodec;
     private readonly CallRecorder _recorder;
     private readonly string _testStoragePath;
 
     public CallRecorderTests()
     {
         _mockLogger = new Mock<ILogger<CallRecorder>>();
-        _recorder = new CallRecorder(_mockLogger.Object);
+        _mockCodec = new Mock<IAmbeCodec>();
+        
+        // Setup mock codec to return silence (320 bytes of zeros)
+        _mockCodec.Setup(c => c.DecodeToPcm(It.IsAny<byte[]>()))
+                  .Returns(new byte[320]);
+        
+        _recorder = new CallRecorder(_mockLogger.Object, _mockCodec.Object);
         
         // Use a temporary directory for tests
         _testStoragePath = Path.Combine(Path.GetTempPath(), $"CallRecorderTests_{Guid.NewGuid()}");

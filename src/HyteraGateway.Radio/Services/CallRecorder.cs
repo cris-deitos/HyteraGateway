@@ -16,7 +16,7 @@ namespace HyteraGateway.Radio.Services;
 public class CallRecorder : IDisposable
 {
     private readonly ILogger<CallRecorder> _logger;
-    private readonly IAmbeCodec? _ambeCodec;
+    private readonly IAmbeCodec _ambeCodec;
     private readonly TransmissionRepository? _transmissionRepository;
     private readonly FtpClient? _ftpClient;
     private readonly ConcurrentDictionary<string, ActiveRecording> _activeRecordings = new();
@@ -47,12 +47,12 @@ public class CallRecorder : IDisposable
     /// Initializes a new instance of the CallRecorder
     /// </summary>
     /// <param name="logger">Logger instance</param>
-    /// <param name="ambeCodec">Optional AMBE codec for audio decoding</param>
+    /// <param name="ambeCodec">AMBE codec for audio decoding</param>
     /// <param name="transmissionRepository">Optional repository for database storage</param>
     /// <param name="ftpClient">Optional FTP client for auto-upload</param>
     public CallRecorder(
         ILogger<CallRecorder> logger, 
-        IAmbeCodec? ambeCodec = null,
+        IAmbeCodec ambeCodec,
         TransmissionRepository? transmissionRepository = null,
         FtpClient? ftpClient = null)
     {
@@ -275,7 +275,7 @@ public class CallRecorder : IDisposable
                 {
                     using (var tempWriter = new WaveFileWriter(memoryStream, waveFormat))
                     {
-                        if (_ambeCodec != null && recording.Frames.Count > 0)
+                        if (recording.Frames.Count > 0)
                         {
                             _logger.LogDebug("Decoding {FrameCount} AMBE frames using codec", recording.Frames.Count);
                             
@@ -305,7 +305,7 @@ public class CallRecorder : IDisposable
                         }
                         else
                         {
-                            _logger.LogWarning("No AMBE codec available or no frames, creating silent audio");
+                            _logger.LogWarning("No frames to decode, creating silent audio");
                             var duration = recording.EndTime - recording.StartTime;
                             var sampleCount = (int)(waveFormat.SampleRate * duration.TotalSeconds);
                             var silenceBuffer = new byte[sampleCount * 2];
