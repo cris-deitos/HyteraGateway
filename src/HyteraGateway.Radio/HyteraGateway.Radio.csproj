@@ -13,6 +13,50 @@
     <PackageReference Include="NAudio.Lame" Version="2.*" />
   </ItemGroup>
 
+  <!-- Vendor DLL References (optional - graceful fallback if not available) -->
+  <ItemGroup>
+    <Reference Include="HyteraProtocol" Condition="Exists('..\..\lib\vendor\HyteraProtocol.dll')">
+      <HintPath>..\..\lib\vendor\HyteraProtocol.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BPGRadioController" Condition="Exists('..\..\lib\vendor\BPGRadioController.dll')">
+      <HintPath>..\..\lib\vendor\BPGRadioController.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GenericProtocol" Condition="Exists('..\..\lib\vendor\GenericProtocol.dll')">
+      <HintPath>..\..\lib\vendor\GenericProtocol.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Modem" Condition="Exists('..\..\lib\vendor\Modem.dll')">
+      <HintPath>..\..\lib\vendor\Modem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Alvas.Audio" Condition="Exists('..\..\lib\vendor\Alvas.Audio.dll')">
+      <HintPath>..\..\lib\vendor\Alvas.Audio.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RadioCommon" Condition="Exists('..\..\lib\vendor\RadioCommon.dll')">
+      <HintPath>..\..\lib\vendor\RadioCommon.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Copy vendor DLLs to output directory -->
+  <ItemGroup>
+    <None Include="..\..\lib\vendor\*.dll" Condition="Exists('..\..\lib\vendor')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>vendor\%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
+  <!-- Copy XML configuration files to output directory -->
+  <ItemGroup>
+    <None Include="..\..\lib\vendor\*.xml" Condition="Exists('..\..\lib\vendor')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>vendor\%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
