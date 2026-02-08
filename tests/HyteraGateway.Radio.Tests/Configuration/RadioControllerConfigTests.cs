@@ -327,4 +327,52 @@ public class RadioControllerConfigTests
             }
         }
     }
+
+    [Fact]
+    public void UDPService_Properties_SetCorrectly()
+    {
+        // Arrange & Act
+        var service = new UDPService
+        {
+            Name = "RRS",
+            Host = "192.168.10.2",
+            Port = 3002,
+            Multicast = false
+        };
+        
+        // Assert
+        Assert.Equal("RRS", service.Name);
+        Assert.Equal("192.168.10.2", service.Host);
+        Assert.Equal(3002, service.Port);
+        Assert.False(service.Multicast);
+    }
+
+    [Fact]
+    public void UDPComProtocol_DefaultConstructor_InitializesCollections()
+    {
+        // Act
+        var protocol = new UDPComProtocol();
+        
+        // Assert
+        Assert.NotNull(protocol.UDPNetworkServices);
+        Assert.NotNull(protocol.ChannelRulesEnabled);
+        Assert.Empty(protocol.UDPNetworkServices);
+        Assert.Empty(protocol.ChannelRulesEnabled);
+    }
+
+    [Fact]
+    public void RadioControllerConfigLoader_LoadOrDefault_ReturnsDefaultWhenFileNotFound()
+    {
+        // Arrange
+        var nonExistentFile = Path.Combine(Path.GetTempPath(), $"nonexistent_{Guid.NewGuid()}.xml");
+        
+        // Act
+        var config = RadioControllerConfigLoader.LoadOrDefault(nonExistentFile);
+        
+        // Assert
+        Assert.NotNull(config);
+        Assert.NotNull(config.Protocols);
+        Assert.NotNull(config.Radios);
+        Assert.NotNull(config.Slots);
+    }
 }

@@ -9,6 +9,18 @@ namespace HyteraGateway.Radio.Configuration;
 public class RadioControllerConfig
 {
     /// <summary>
+    /// Radio name
+    /// </summary>
+    [XmlAttribute("radioName")]
+    public string? RadioName { get; set; }
+
+    /// <summary>
+    /// Radio ID
+    /// </summary>
+    [XmlAttribute("radioId")]
+    public int RadioId { get; set; }
+
+    /// <summary>
     /// IP address of the radio
     /// </summary>
     [XmlAttribute("RadioIpAddress")]
@@ -68,6 +80,13 @@ public class RadioControllerConfig
     [XmlAttribute("PositionCheckMinutes")]
     public int PositionCheckMinutes { get; set; } = 30;
     
+    /// <summary>
+    /// Protocols configuration
+    /// </summary>
+    [XmlArray("protocols")]
+    [XmlArrayItem("UDPComProtocol")]
+    public List<UDPComProtocol> Protocols { get; set; } = new();
+
     [XmlArray("Radios")]
     [XmlArrayItem("Radio")]
     public List<RadioConfig> Radios { get; set; } = new();
@@ -123,6 +142,85 @@ public class SlotConfig
 }
 
 /// <summary>
+/// UDP communication protocol configuration
+/// </summary>
+public class UDPComProtocol
+{
+    /// <summary>
+    /// Path to the protocol DLL
+    /// </summary>
+    [XmlAttribute("path")]
+    public string? Path { get; set; }
+
+    /// <summary>
+    /// Protocol class name
+    /// </summary>
+    [XmlAttribute("class")]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Device name
+    /// </summary>
+    [XmlAttribute("deviceName")]
+    public string? DeviceName { get; set; }
+
+    /// <summary>
+    /// UDP network services (ports)
+    /// </summary>
+    [XmlArray("UDPNetworkServices")]
+    [XmlArrayItem("UDPService")]
+    public List<UDPService> UDPNetworkServices { get; set; } = new();
+
+    /// <summary>
+    /// Enabled channel rules (RX events)
+    /// </summary>
+    [XmlArray("channelRulesEnabled")]
+    public List<ChannelRule> ChannelRulesEnabled { get; set; } = new();
+}
+
+/// <summary>
+/// UDP service configuration (port definition)
+/// </summary>
+public class UDPService
+{
+    /// <summary>
+    /// Service name (RRS, LP, TMP, RCP, TP, DTP, SDMP)
+    /// </summary>
+    [XmlAttribute("name")]
+    public string Name { get; set; } = "";
+
+    /// <summary>
+    /// Host IP address
+    /// </summary>
+    [XmlAttribute("host")]
+    public string Host { get; set; } = "192.168.10.2";
+
+    /// <summary>
+    /// Port number
+    /// </summary>
+    [XmlAttribute("port")]
+    public int Port { get; set; }
+
+    /// <summary>
+    /// Whether multicast is enabled
+    /// </summary>
+    [XmlAttribute("multicast")]
+    public bool Multicast { get; set; }
+}
+
+/// <summary>
+/// Channel rule (event type)
+/// </summary>
+public class ChannelRule
+{
+    /// <summary>
+    /// Rule name (event type like RX_CALL, RX_GPS_SENTENCE, etc.)
+    /// </summary>
+    [XmlText]
+    public string? Name { get; set; }
+}
+
+/// <summary>
 /// Utility class for loading and saving RadioController configuration
 /// </summary>
 public static class RadioControllerConfigLoader
@@ -145,5 +243,25 @@ public static class RadioControllerConfigLoader
         var serializer = new XmlSerializer(typeof(RadioControllerConfig));
         using var writer = new StreamWriter(filePath);
         serializer.Serialize(writer, config);
+    }
+
+    /// <summary>
+    /// Tries to load configuration, returns default if file not found
+    /// </summary>
+    public static RadioControllerConfig LoadOrDefault(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                return Load(filePath);
+            }
+        }
+        catch
+        {
+            // Fall through to return default
+        }
+
+        return new RadioControllerConfig();
     }
 }
