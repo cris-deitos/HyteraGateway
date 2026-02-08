@@ -58,8 +58,37 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshDataAsync()
     {
-        // TODO: Call API to get current status
-        await Task.CompletedTask;
+        try
+        {
+            var status = await _api.GetAsync<ServiceStatus>("/api/status");
+            if (status != null)
+            {
+                ServiceStatus = status.IsOnline ? "Online" : "Offline";
+                ActiveRadios = status.ActiveRadioCount;
+                CallsToday = status.CallsToday;
+                RecordingsSize = FormatBytes(status.RecordingsSizeBytes);
+                DatabaseStatus = status.DatabaseConnected ? "Connected" : "Disconnected";
+                FtpStatus = status.FtpConnected ? "Connected" : "Disconnected";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to refresh data: {ex.Message}");
+            ServiceStatus = "Error";
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
     }
 
     private void OnRadioEvent(object? sender, Core.Models.RadioEvent evt)
