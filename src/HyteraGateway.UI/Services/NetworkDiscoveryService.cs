@@ -15,6 +15,11 @@ namespace HyteraGateway.UI.Services;
 /// </summary>
 public class NetworkDiscoveryService
 {
+    // Hytera IPSC protocol constants
+    private static readonly byte[] IPSC_IDENT_PACKET = new byte[] { 0x50, 0x48, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00 };
+    private const int IPSC_CONNECT_TIMEOUT_MS = 2000;
+    private const int IPSC_READ_TIMEOUT_MS = 1000;
+
     /// <summary>
     /// Get all network interfaces that might be RNDIS or NCM (USB network adapters)
     /// </summary>
@@ -222,19 +227,17 @@ public class NetworkDiscoveryService
             // Try to connect and get radio info via IPSC protocol
             using var client = new TcpClient();
             var connectTask = client.ConnectAsync(ipAddress, 50000);
-            if (await Task.WhenAny(connectTask, Task.Delay(2000)) == connectTask && client.Connected)
+            if (await Task.WhenAny(connectTask, Task.Delay(IPSC_CONNECT_TIMEOUT_MS)) == connectTask && client.Connected)
             {
                 // Send identification request (Hytera IPSC protocol)
                 var stream = client.GetStream();
                 
-                // Hytera IPSC identification packet
-                byte[] identPacket = new byte[] { 0x50, 0x48, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00 };
-                await stream.WriteAsync(identPacket, 0, identPacket.Length);
+                await stream.WriteAsync(IPSC_IDENT_PACKET, 0, IPSC_IDENT_PACKET.Length);
                 
                 // Read response
                 byte[] buffer = new byte[256];
                 var readTask = stream.ReadAsync(buffer, 0, buffer.Length);
-                if (await Task.WhenAny(readTask, Task.Delay(1000)) == readTask)
+                if (await Task.WhenAny(readTask, Task.Delay(IPSC_READ_TIMEOUT_MS)) == readTask)
                 {
                     int bytesRead = await readTask;
                     if (bytesRead > 10)
