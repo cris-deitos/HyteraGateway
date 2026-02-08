@@ -29,38 +29,27 @@ dotnet build -c $Configuration --no-restore
 Write-Host "🧪 Running tests..." -ForegroundColor Yellow
 dotnet test -c $Configuration --no-build --verbosity minimal
 
+# Common publish parameters
+$publishParams = @(
+    "-c", $Configuration,
+    "-r", "win-x64",
+    "--self-contained", "true",
+    "-p:PublishSingleFile=true",
+    "-p:IncludeNativeLibrariesForSelfExtract=true",
+    "-p:EnableCompressionInSingleFile=true"
+)
+
 # Publish UI
 Write-Host "📦 Publishing UI..." -ForegroundColor Yellow
-dotnet publish src\HyteraGateway.UI\HyteraGateway.UI.csproj `
-    -c $Configuration `
-    -r win-x64 `
-    --self-contained true `
-    -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:EnableCompressionInSingleFile=true `
-    -o "$OutputDir\UI"
+dotnet publish src\HyteraGateway.UI\HyteraGateway.UI.csproj @publishParams -o "$OutputDir\UI"
 
 # Publish API
 Write-Host "📦 Publishing API..." -ForegroundColor Yellow
-dotnet publish src\HyteraGateway.Api\HyteraGateway.Api.csproj `
-    -c $Configuration `
-    -r win-x64 `
-    --self-contained true `
-    -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:EnableCompressionInSingleFile=true `
-    -o "$OutputDir\API"
+dotnet publish src\HyteraGateway.Api\HyteraGateway.Api.csproj @publishParams -o "$OutputDir\API"
 
 # Publish Service
 Write-Host "📦 Publishing Service..." -ForegroundColor Yellow
-dotnet publish src\HyteraGateway.Service\HyteraGateway.Service.csproj `
-    -c $Configuration `
-    -r win-x64 `
-    --self-contained true `
-    -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:EnableCompressionInSingleFile=true `
-    -o "$OutputDir\Service"
+dotnet publish src\HyteraGateway.Service\HyteraGateway.Service.csproj @publishParams -o "$OutputDir\Service"
 
 Write-Host ""
 Write-Host "✅ Build completed successfully!" -ForegroundColor Green
