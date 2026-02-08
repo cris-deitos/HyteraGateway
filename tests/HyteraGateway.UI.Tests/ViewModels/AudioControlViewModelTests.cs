@@ -9,12 +9,12 @@ namespace HyteraGateway.UI.Tests.ViewModels;
 
 public class AudioControlViewModelTests
 {
-    private readonly Mock<AudioService> _mockAudioService;
+    private readonly Mock<IAudioService> _mockAudioService;
     private readonly AudioControlViewModel _viewModel;
 
     public AudioControlViewModelTests()
     {
-        _mockAudioService = new Mock<AudioService>();
+        _mockAudioService = new Mock<IAudioService>();
         _viewModel = new AudioControlViewModel(_mockAudioService.Object);
     }
 

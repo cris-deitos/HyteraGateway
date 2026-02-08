@@ -5,7 +5,7 @@ using NAudio.Wave;
 
 namespace HyteraGateway.UI.Services;
 
-public class AudioService : IDisposable
+public class AudioService : IAudioService
 {
     private HubConnection? _hubConnection;
     private WaveOutEvent? _waveOut;
