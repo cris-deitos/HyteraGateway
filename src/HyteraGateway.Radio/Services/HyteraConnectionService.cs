@@ -23,6 +23,11 @@ public class HyteraConnectionService : IRadioService, IDisposable
     public event EventHandler<RadioEvent>? RadioEvent;
 
     /// <summary>
+    /// Gets whether the radio is currently connected
+    /// </summary>
+    public bool IsConnected => _connection?.IsConnected ?? false;
+
+    /// <summary>
     /// Initializes a new instance of the HyteraConnectionService
     /// </summary>
     /// <param name="logger">Logger instance</param>

@@ -13,6 +13,7 @@ public class AudioService : IDisposable
     private WaveInEvent? _waveIn;
     private bool _isTransmitting;
     private bool _isReceiving;
+    private readonly ConfigurationService _configurationService;
     
     public event EventHandler<AudioStateChangedEventArgs>? StateChanged;
     public event EventHandler<float>? AudioLevelChanged;
@@ -23,10 +24,17 @@ public class AudioService : IDisposable
     public float Volume { get; set; } = 1.0f;
     public bool IsMuted { get; set; }
 
+    public AudioService(ConfigurationService configurationService)
+    {
+        _configurationService = configurationService;
+    }
+
     public async Task ConnectAsync()
     {
+        var audioHubUrl = _configurationService.Configuration.ApiBaseUrl + "/hubs/audio";
+        
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5000/hubs/audio")
+            .WithUrl(audioHubUrl)
             .WithAutomaticReconnect()
             .Build();
 
@@ -86,9 +94,9 @@ public class AudioService : IDisposable
         StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Idle"));
     }
 
-    public async Task StartTransmitAsync(int targetRadioId)
+    public Task StartTransmitAsync(int targetRadioId)
     {
-        if (_isTransmitting) return;
+        if (_isTransmitting) return Task.CompletedTask;
         
         _waveIn = new WaveInEvent
         {
@@ -112,6 +120,7 @@ public class AudioService : IDisposable
         _waveIn.StartRecording();
         _isTransmitting = true;
         StateChanged?.Invoke(this, new AudioStateChangedEventArgs("Transmitting"));
+        return Task.CompletedTask;
     }
 
     public void StopTransmit()
@@ -127,7 +136,14 @@ public class AudioService : IDisposable
     {
         if (IsMuted || _bufferedWaveProvider == null) return;
         
-        // In production, decode Opus here. For now, assume PCM
+        // TODO: Decode Opus audio to PCM
+        // The incoming audio is Opus-encoded (see AudioHub.BroadcastAudioPacket() which calls EncodePcmToOpus())
+        // This requires an Opus decoder library such as:
+        //   - Concentus (pure C# implementation): https://github.com/lostromb/concentus
+        //   - OpusSharp (native wrapper): https://github.com/bamfbamf/OpusSharp
+        // Without proper Opus decoding, audio will not play correctly.
+        // For now, we assume PCM for development/testing purposes only.
+        
         // Apply volume
         byte[] adjusted = ApplyVolume(opusData, Volume);
         _bufferedWaveProvider.AddSamples(adjusted, 0, adjusted.Length);
@@ -146,7 +162,8 @@ public class AudioService : IDisposable
         for (int i = 0; i < pcmData.Length; i += 2)
         {
             short sample = (short)(pcmData[i] | (pcmData[i + 1] << 8));
-            sample = (short)(sample * volume);
+            int amplified = (int)(sample * volume);
+            sample = (short)Math.Clamp(amplified, short.MinValue, short.MaxValue);
             result[i] = (byte)(sample & 0xFF);
             result[i + 1] = (byte)((sample >> 8) & 0xFF);
         }

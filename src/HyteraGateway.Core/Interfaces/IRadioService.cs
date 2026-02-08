@@ -8,6 +8,11 @@ namespace HyteraGateway.Core.Interfaces;
 public interface IRadioService
 {
     /// <summary>
+    /// Gets whether the radio is currently connected
+    /// </summary>
+    bool IsConnected { get; }
+
+    /// <summary>
     /// Connects to the Hytera radio via USB NCM
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
