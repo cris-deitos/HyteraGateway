@@ -2,6 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
+using Concentus.Structs;
+using Concentus.Enums;
 
 namespace HyteraGateway.UI.Services;
 
@@ -14,6 +16,7 @@ public class AudioService : IAudioService
     private bool _isTransmitting;
     private bool _isReceiving;
     private readonly ConfigurationService _configurationService;
+    private OpusDecoder? _opusDecoder;
     
     public event EventHandler<AudioStateChangedEventArgs>? StateChanged;
     public event EventHandler<float>? AudioLevelChanged;
@@ -46,6 +49,9 @@ public class AudioService : IAudioService
             BufferDuration = TimeSpan.FromSeconds(5),
             DiscardOnBufferOverflow = true
         };
+        
+        // Initialize Opus decoder (48kHz, mono)
+        _opusDecoder = new OpusDecoder(48000, 1);
         
         _waveOut = new WaveOutEvent();
         _waveOut.Init(_bufferedWaveProvider);
@@ -134,19 +140,31 @@ public class AudioService : IAudioService
 
     private void OnAudioReceived(byte[] opusData, int radioId, int talkGroupId, long timestamp)
     {
-        if (IsMuted || _bufferedWaveProvider == null) return;
+        if (IsMuted || _bufferedWaveProvider == null || _opusDecoder == null) return;
         
-        // TODO: Decode Opus audio to PCM
-        // The incoming audio is Opus-encoded (see AudioHub.BroadcastAudioPacket() which calls EncodePcmToOpus())
-        // This requires an Opus decoder library such as:
-        //   - Concentus (pure C# implementation): https://github.com/lostromb/concentus
-        //   - OpusSharp (native wrapper): https://github.com/bamfbamf/OpusSharp
-        // Without proper Opus decoding, audio will not play correctly.
-        // For now, we assume PCM for development/testing purposes only.
-        
-        // Apply volume
-        byte[] adjusted = ApplyVolume(opusData, Volume);
-        _bufferedWaveProvider.AddSamples(adjusted, 0, adjusted.Length);
+        try
+        {
+            // Decode Opus to PCM
+            // Opus frame at 48kHz can contain up to 5760 samples (120ms)
+            short[] pcmBuffer = new short[5760];
+            int samplesDecoded = _opusDecoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, pcmBuffer.Length, false);
+            
+            if (samplesDecoded > 0)
+            {
+                // Convert short[] to byte[] for NAudio using Buffer.BlockCopy for efficiency
+                byte[] pcmBytes = new byte[samplesDecoded * 2];
+                Buffer.BlockCopy(pcmBuffer, 0, pcmBytes, 0, samplesDecoded * 2);
+                
+                // Apply volume
+                byte[] adjusted = ApplyVolume(pcmBytes, Volume);
+                _bufferedWaveProvider.AddSamples(adjusted, 0, adjusted.Length);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Opus decode error: {ex.Message}");
+            // On decode error, skip this packet
+        }
         
         if (!_isReceiving)
         {
@@ -198,6 +216,7 @@ public class AudioService : IAudioService
     {
         _waveIn?.Dispose();
         _waveOut?.Dispose();
+        _opusDecoder = null; // OpusDecoder doesn't implement IDisposable
         _hubConnection?.DisposeAsync().AsTask().Wait();
     }
 }
