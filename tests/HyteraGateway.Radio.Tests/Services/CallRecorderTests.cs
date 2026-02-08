@@ -76,7 +76,7 @@ public class CallRecorderTests : IDisposable
     }
 
     [Fact]
-    public void AppendFrame_ActiveRecording_AddsFrameToBuffer()
+    public async Task AppendFrame_ActiveRecording_AddsFrameToBuffer()
     {
         // Arrange
         var callId = "test-call-1";
@@ -84,7 +84,7 @@ public class CallRecorderTests : IDisposable
         uint talkGroupId = 9;
         byte slot = 0;
 
-        _recorder.StartRecordingAsync(callId, radioId, talkGroupId, slot).Wait();
+        await _recorder.StartRecordingAsync(callId, radioId, talkGroupId, slot);
 
         var ambeData = new byte[33];
         Array.Fill<byte>(ambeData, 0xAA);
