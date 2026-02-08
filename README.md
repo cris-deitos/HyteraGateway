@@ -190,6 +190,41 @@ This project includes comprehensive production features:
 - **Reliability**: Dual slot manager handles simultaneous calls on both timeslots
 - **Quality**: 69+ unit tests ensure code reliability and maintainability
 
+## 📦 Download
+
+Download the latest release from the [Releases page](https://github.com/cris-deitos/HyteraGateway/releases).
+
+### Available Packages
+
+| Package | Description |
+|---------|-------------|
+| `HyteraGateway-UI-*-win-x64.zip` | Desktop application (WPF) |
+| `HyteraGateway-API-*-win-x64.zip` | REST API server |
+| `HyteraGateway-Service-*-win-x64.zip` | Windows Service |
+
+All packages are self-contained and do not require .NET runtime to be installed.
+
+## 🔨 Building from Source
+
+### Prerequisites
+- Windows 10/11
+- .NET 8 SDK
+
+### Quick Build
+```powershell
+# Clone the repository
+git clone https://github.com/cris-deitos/HyteraGateway.git
+cd HyteraGateway
+
+# Run build script
+.\scripts\build-release.ps1
+```
+
+### Manual Build
+```powershell
+dotnet publish src\HyteraGateway.UI\HyteraGateway.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o .\publish
+```
+
 ## License
 
 [Specify your license here]
