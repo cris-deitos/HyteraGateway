@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HyteraGateway.Core\HyteraGateway.Core.csproj" />
+    <ProjectReference Include="..\HyteraGateway.Audio\HyteraGateway.Audio.csproj" />
+    <ProjectReference Include="..\HyteraGateway.Data\HyteraGateway.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

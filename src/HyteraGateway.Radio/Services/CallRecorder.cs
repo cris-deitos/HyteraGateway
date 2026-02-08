@@ -3,6 +3,9 @@ using Microsoft.Extensions.Logging;
 using NAudio.Wave;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using HyteraGateway.Audio.Codecs.Ambe;
+using HyteraGateway.Core.Models;
+using HyteraGateway.Data.Repositories;
 
 namespace HyteraGateway.Radio.Services;
 
@@ -12,6 +15,9 @@ namespace HyteraGateway.Radio.Services;
 public class CallRecorder : IDisposable
 {
     private readonly ILogger<CallRecorder> _logger;
+    private readonly IAmbeCodec? _ambeCodec;
+    private readonly TransmissionRepository? _transmissionRepository;
+    private readonly FtpClient? _ftpClient;
     private readonly ConcurrentDictionary<string, ActiveRecording> _activeRecordings = new();
     private readonly SemaphoreSlim _disposeLock = new(1, 1);
     private bool _disposed;
@@ -32,12 +38,27 @@ public class CallRecorder : IDisposable
     public bool Enabled { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets whether to auto-upload recordings to FTP server
+    /// </summary>
+    public bool AutoUploadToFtp { get; set; } = false;
+
+    /// <summary>
     /// Initializes a new instance of the CallRecorder
     /// </summary>
     /// <param name="logger">Logger instance</param>
-    public CallRecorder(ILogger<CallRecorder> logger)
+    /// <param name="ambeCodec">Optional AMBE codec for audio decoding</param>
+    /// <param name="transmissionRepository">Optional repository for database storage</param>
+    /// <param name="ftpClient">Optional FTP client for auto-upload</param>
+    public CallRecorder(
+        ILogger<CallRecorder> logger, 
+        IAmbeCodec? ambeCodec = null,
+        TransmissionRepository? transmissionRepository = null,
+        FtpClient? ftpClient = null)
     {
         _logger = logger;
+        _ambeCodec = ambeCodec;
+        _transmissionRepository = transmissionRepository;
+        _ftpClient = ftpClient;
     }
 
     /// <summary>
@@ -159,6 +180,66 @@ public class CallRecorder : IDisposable
                 _logger.LogInformation("Recording saved: {FilePath} ({FrameCount} frames, {Duration:mm\\:ss})",
                     filePath, recording.Frames.Count, recording.EndTime - recording.StartTime);
 
+                // Save to database if repository is configured
+                if (_transmissionRepository != null)
+                {
+                    try
+                    {
+                        var fileInfo = new FileInfo(filePath);
+                        var callRecord = new CallRecord
+                        {
+                            Id = Guid.NewGuid(),
+                            Slot = recording.Slot + 1, // Store as 1-based
+                            CallerDmrId = (int)recording.RadioId,
+                            CallerAlias = null, // Not available in current recording
+                            TargetId = (int)recording.TalkGroupId,
+                            CallType = Core.Models.CallType.Group, // Default to Group
+                            StartTime = recording.StartTime,
+                            EndTime = recording.EndTime,
+                            Duration = (recording.EndTime - recording.StartTime).TotalSeconds,
+                            AudioFilePath = filePath,
+                            AudioFileSize = fileInfo.Length
+                        };
+
+                        await _transmissionRepository.InsertAsync(callRecord, cancellationToken);
+                        _logger.LogDebug("Call record saved to database: {CallId}", callRecord.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to save call record to database for {CallId}", callId);
+                        // Continue - recording file is still saved
+                    }
+                }
+
+                // Upload to FTP if configured and enabled
+                if (AutoUploadToFtp && _ftpClient != null)
+                {
+                    try
+                    {
+                        var uploadSuccess = await _ftpClient.UploadFileAsync(filePath, cancellationToken);
+                        if (uploadSuccess)
+                        {
+                            _logger.LogInformation("Recording uploaded to FTP: {FilePath}", filePath);
+                            
+                            // Also upload metadata file
+                            var metadataPath = Path.ChangeExtension(filePath, ".json");
+                            if (File.Exists(metadataPath))
+                            {
+                                await _ftpClient.UploadFileAsync(metadataPath, cancellationToken);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Failed to upload recording to FTP: {FilePath}", filePath);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error uploading recording to FTP: {FilePath}", filePath);
+                        // Continue - recording file is still saved locally
+                    }
+                }
+
                 return filePath;
             }
 
@@ -172,7 +253,7 @@ public class CallRecorder : IDisposable
     }
 
     /// <summary>
-    /// Converts AMBE frames to WAV audio file
+    /// Converts AMBE frames to WAV or MP3 audio file
     /// </summary>
     /// <param name="recording">Active recording data</param>
     /// <param name="filePath">Output file path</param>
@@ -182,33 +263,61 @@ public class CallRecorder : IDisposable
     {
         try
         {
-            // AMBE+2 in DMR is compressed audio that requires a vocoder to decode
-            // For now, we'll create a placeholder WAV file with the raw AMBE data stored as metadata
-            // A proper implementation would use an AMBE vocoder library to decode to PCM
+            // MP3 conversion requires additional dependencies (NAudio.Lame or Windows Media Foundation)
+            // For now, we only support WAV format with proper AMBE decoding
+            if (Format.ToLowerInvariant() == "mp3")
+            {
+                _logger.LogWarning("MP3 format requested but not fully implemented, saving as WAV instead");
+                filePath = Path.ChangeExtension(filePath, ".wav");
+            }
 
-            // Create a simple WAV file with 8kHz mono PCM (DMR standard)
-            // Note: This creates a silent WAV as a placeholder. A real implementation needs AMBE decoder.
             var waveFormat = new WaveFormat(8000, 16, 1); // 8kHz, 16-bit, mono
-            var duration = recording.EndTime - recording.StartTime;
-            var sampleCount = (int)(waveFormat.SampleRate * duration.TotalSeconds);
 
             await Task.Run(() =>
             {
                 using var writer = new WaveFileWriter(filePath, waveFormat);
                 
-                // TODO: AMBE to PCM conversion required here
-                // This is a placeholder implementation that writes silence
-                // For production use, integrate an AMBE+2 vocoder library (e.g., mbelib, md380tools)
-                // to decode AMBE frames to PCM audio data
-                
-                // Write silence as placeholder
-                var silenceBuffer = new byte[sampleCount * 2]; // 16-bit = 2 bytes per sample
-                writer.Write(silenceBuffer, 0, silenceBuffer.Length);
-                
-                // In a production system, you would:
-                // 1. Use an AMBE+2 vocoder library (e.g., mbelib, md380tools)
-                // 2. Decode each AMBE frame to PCM samples
-                // 3. Write the decoded PCM to the WAV file
+                if (_ambeCodec != null && recording.Frames.Count > 0)
+                {
+                    _logger.LogDebug("Decoding {FrameCount} AMBE frames using codec", recording.Frames.Count);
+                    
+                    // Decode each AMBE frame to PCM
+                    foreach (var frame in recording.Frames)
+                    {
+                        try
+                        {
+                            // Decode AMBE frame to PCM (returns 320 bytes = 160 samples)
+                            byte[] pcmData = _ambeCodec.DecodeToPcm(frame.AmbeData);
+                            
+                            if (pcmData != null && pcmData.Length > 0)
+                            {
+                                writer.Write(pcmData, 0, pcmData.Length);
+                            }
+                            else
+                            {
+                                // Write silence if decode returned empty data
+                                byte[] silence = new byte[320]; // 160 samples * 2 bytes
+                                writer.Write(silence, 0, silence.Length);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to decode AMBE frame, writing silence");
+                            // Write silence for this frame on error (graceful degradation)
+                            byte[] silence = new byte[320]; // 160 samples * 2 bytes
+                            writer.Write(silence, 0, silence.Length);
+                        }
+                    }
+                }
+                else
+                {
+                    // No codec available or no frames - create silent WAV
+                    _logger.LogWarning("No AMBE codec available or no frames, creating silent WAV");
+                    var duration = recording.EndTime - recording.StartTime;
+                    var sampleCount = (int)(waveFormat.SampleRate * duration.TotalSeconds);
+                    var silenceBuffer = new byte[sampleCount * 2]; // 16-bit = 2 bytes per sample
+                    writer.Write(silenceBuffer, 0, silenceBuffer.Length);
+                }
                 
             }, cancellationToken);
 
