@@ -8,25 +8,25 @@ on:
 jobs:
   build-and-release:
     runs-on: windows-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      
+
       - name: Restore dependencies
         run: dotnet restore
-      
+
       - name: Build
         run: dotnet build -c Release --no-restore
-      
+
       - name: Run tests
         run: dotnet test -c Release --no-build --verbosity normal
-      
+
       - name: Publish UI (Single File EXE)
         run: |
           dotnet publish src/HyteraGateway.UI/HyteraGateway.UI.csproj `
@@ -37,7 +37,7 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:EnableCompressionInSingleFile=true `
             -o ./publish/UI
-      
+
       - name: Publish API (Single File EXE)
         run: |
           dotnet publish src/HyteraGateway.Api/HyteraGateway.Api.csproj `
@@ -48,7 +48,7 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:EnableCompressionInSingleFile=true `
             -o ./publish/API
-      
+
       - name: Publish Service (Single File EXE)
         run: |
           dotnet publish src/HyteraGateway.Service/HyteraGateway.Service.csproj `
@@ -59,37 +59,37 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:EnableCompressionInSingleFile=true `
             -o ./publish/Service
-      
+
       - name: Create ZIP packages
         run: |
           Compress-Archive -Path ./publish/UI/* -DestinationPath ./HyteraGateway-UI-${{ github.ref_name }}-win-x64.zip
           Compress-Archive -Path ./publish/API/* -DestinationPath ./HyteraGateway-API-${{ github.ref_name }}-win-x64.zip
           Compress-Archive -Path ./publish/Service/* -DestinationPath ./HyteraGateway-Service-${{ github.ref_name }}-win-x64.zip
-      
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: HyteraGateway ${{ github.ref_name }}
           body: |
             ## HyteraGateway ${{ github.ref_name }}
-            
+
             ### Downloads
-            
+
             | Package | Description |
             |---------|-------------|
             | `HyteraGateway-UI-*-win-x64.zip` | Desktop application (WPF) |
             | `HyteraGateway-API-*-win-x64.zip` | REST API server |
             | `HyteraGateway-Service-*-win-x64.zip` | Windows Service |
-            
+
             ### Requirements
             - Windows 10/11 x64
             - No .NET runtime required (self-contained)
-            
+
             ### Installation
             1. Download the ZIP file for your component
             2. Extract to desired location
             3. Run the EXE
-            
+
             For the Windows Service:
             ```powershell
             # Install as service (run as Administrator)
