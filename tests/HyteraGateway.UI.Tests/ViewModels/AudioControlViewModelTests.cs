@@ -15,6 +15,7 @@ public class AudioControlViewModelTests
     public AudioControlViewModelTests()
     {
         _mockAudioService = new Mock<IAudioService>();
+        _mockAudioService.SetupProperty(x => x.Volume);
         _viewModel = new AudioControlViewModel(_mockAudioService.Object);
     }
 
