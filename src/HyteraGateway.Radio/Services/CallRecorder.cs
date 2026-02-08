@@ -324,7 +324,7 @@ public class CallRecorder : IDisposable
                     using var wavStream = new MemoryStream(wavBytes);
                     using var reader = new WaveFileReader(wavStream);
                     using var mp3Writer = new LameMP3FileWriter(filePath, reader.WaveFormat, LAMEPreset.STANDARD);
-                    reader.CopyTo(mp3Writer);
+                    reader.CopyTo(mp3Writer, 81920); // Use 80KB buffer for efficient streaming
                     _logger.LogDebug("Saved recording as MP3: {FilePath}", filePath);
                 }
                 else
