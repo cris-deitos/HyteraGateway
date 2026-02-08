@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Net.Http;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -71,9 +72,15 @@ public partial class DashboardViewModel : ObservableObject
                 FtpStatus = status.FtpConnected ? "Connected" : "Disconnected";
             }
         }
+        catch (HttpRequestException)
+        {
+            ServiceStatus = "Offline";
+            DatabaseStatus = "Unknown";
+            FtpStatus = "Unknown";
+        }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to refresh data: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to refresh dashboard: {ex.Message}");
             ServiceStatus = "Error";
         }
     }

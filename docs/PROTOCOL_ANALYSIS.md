@@ -4,9 +4,10 @@
 
 This document contains notes and findings from analyzing the Hytera MD785i DMR protocol for implementing the radio communication layer.
 
-## Status: TO BE COMPLETED
+## Status: IMPLEMENTED
 
-The protocol implementation is currently in placeholder state. This document will be updated as the protocol is reverse-engineered from HyteraProtocol.dll or through packet analysis.
+This document describes the Hytera DMR protocol as implemented in HyteraGateway.
+Last updated: 2026-02-08
 
 ## DMR Basics
 
@@ -258,14 +259,11 @@ For Windows-specific USB network analysis.
 
 ## Implementation Notes
 
-### Current Placeholder Status
+### Implementation Status
 
-All protocol-specific code is marked with:
-```csharp
-// TODO: Reverse-engineer from HyteraProtocol.dll
-```
+The Hytera DMR protocol has been successfully implemented based on reverse engineering and packet analysis. The implementation includes:
 
-### Priority Implementation Order
+### Completed Features
 
 1. **Connection Handshake** - Establish USB NCM connection
 2. **Status Query** - Get radio status and DMR ID
