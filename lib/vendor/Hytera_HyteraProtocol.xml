@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Hytera>
+<InterfaceIPAddress>192.168.10.1</InterfaceIPAddress>
+<BaseIPAddress>12.0.0.100</BaseIPAddress>
+<DefaultGroups>
+<DefaultGroup channel="1" code="g1" ob="DYNAMIC" />
+</DefaultGroups>
+<Timer>
+<RRSFirstTimerInMin>35</RRSFirstTimerInMin>
+<RRSSecondTimerInMin>2</RRSSecondTimerInMin>
+<TimerSleepLetturaPacchettiInMs>1</TimerSleepLetturaPacchettiInMs>
+</Timer>
+<IPPrefix>
+<Single>12</Single>
+<Group>225</Group>
+</IPPrefix>
+<StatusMessage>
+<message code="91" voice="False" emergency="False">MARCATURA</message>
+<message code="95" voice="False" emergency="True">Stato Emergenza</message>
+<message code="0" voice="True" emergency="False">Voce</message>
+</StatusMessage>
+<PingInterval>60</PingInterval>
+<RRSRevert enabled="False" txSlot="0" />
+<PTT>PTT</PTT>
+<BeaconBaseValue>40000</BeaconBaseValue>
+<BeaconBatteryLowStatus>35</BeaconBatteryLowStatus>
+<BeaconBatteryLowOffset>1000</BeaconBatteryLowOffset>
+<LocalizationType>O</LocalizationType>
+<AllowTransmitInterrupt>false</AllowTransmitInterrupt>
+<AllowSendEmergency>false</AllowSendEmergency>
+<ConnectionType>B</ConnectionType>
+<RtpBufferSize>10</RtpBufferSize>
+<RtpTimeoutMs>500</RtpTimeoutMs>
+<RtpLogReOrder>false</RtpLogReOrder>
+<AudioRxTimeoutMs>55</AudioRxTimeoutMs>
+<AudioTxTimeoutMs>55</AudioTxTimeoutMs>
+<RxVolume>500</RxVolume>
+<TxVolume>100</TxVolume>
+<RTPAudioOutputType>PCM</RTPAudioOutputType>
+<AniTones>
+<AniTonesProtocol>None</AniTonesProtocol>
+<AniTonesRepeatTone>E</AniTonesRepeatTone>
+<AniTonesGroupDigit>A</AniTonesGroupDigit>
+<AniTonesACKTimeout>true</AniTonesACKTimeout>
+<DecoderToneDurationMin>40</DecoderToneDurationMin>
+<DecoderToneDurationMax>100</DecoderToneDurationMax>
+<DecoderToneDurationPause>100</DecoderToneDurationPause>
+<EncoderToneDuration>70</EncoderToneDuration>
+<EncoderToneDurationPause>100</EncoderToneDurationPause>
+<EncoderToneDurationPretime>500</EncoderToneDurationPretime>
+<DecoderType1>PTTDekeyID</DecoderType1>
+<DecoderType2>PTTDekeyID</DecoderType2>
+<DecoderType3>PTTDekeyID</DecoderType3>
+<DecoderType4>PTTDekeyID</DecoderType4>
+<DecoderType5>PTTDekeyID</DecoderType5>
+<Decoder1></Decoder1>
+<Decoder2></Decoder2>
+<Decoder3></Decoder3>
+<Decoder4></Decoder4>
+<Decoder5></Decoder5>
+<EncoderLeadingEdgePTT></EncoderLeadingEdgePTT>
+<EncoderTrailingEdgePTT></EncoderTrailingEdgePTT>
+<EncoderCallAlert></EncoderCallAlert>
+<EncoderACKForIndividual></EncoderACKForIndividual>
+<EncoderACKForEmergency></EncoderACKForEmergency>
+<EncoderGroupCall></EncoderGroupCall>
+<AniEmptyIndividual>0</AniEmptyIndividual>
+<AniEmptyGroup>0</AniEmptyGroup>
+</AniTones>
+<UseRadioMonitor>false</UseRadioMonitor>
+<ResetRadio type="NONE" />
+<Telemetry>
+<QueryStatus>99</QueryStatus>
+<Inputs>
+</Inputs>
+<Outputs>
+</Outputs>
+</Telemetry>
+</Hytera>

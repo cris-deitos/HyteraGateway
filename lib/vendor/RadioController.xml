@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RadioController radioName="BASE" radioId="100">
+<radioChannels>
+<ch>
+<number>1</number>
+<description>Channel 1</description>
+<default />
+</ch>
+</radioChannels>
+<protocols>
+<UDPComProtocol path="./" class="HyteraProtocol" deviceName="HyteraProtocol" ACKSoftwareEnabled="False" MulticastTTL="6">
+<UDPNetworkServices><UDPService name="RRS" host="192.168.10.2" port="3002" multicast="False" />
+<UDPService name="LP" host="192.168.10.2" port="3003" multicast="False" />
+<UDPService name="TMP" host="192.168.10.2" port="3004" multicast="False" />
+<UDPService name="RCP" host="192.168.10.2" port="3005" multicast="False" />
+<UDPService name="TP" host="192.168.10.2" port="3006" multicast="False" />
+<UDPService name="DTP" host="192.168.10.2" port="3007" multicast="False" />
+<UDPService name="SDMP" host="192.168.10.2" port="3009" multicast="False" />
+</UDPNetworkServices><TCPNetworkServices /><channelRulesEnabled>
+<RX_CALL />
+<RX_CALL_ACK />
+<RX_CHANNEL_STATUS_CHANGED />
+<RX_END_PTT_ID />
+<RX_FREE_TEXT_MESSAGE />
+<RX_GPS_SENTENCE />
+<RX_RADIO_ON />
+<RX_RADIO_OFF />
+<RX_CALL_STARTED />
+<RX_CALL_ENDED />
+</channelRulesEnabled>
+</UDPComProtocol>
+</protocols>
+<profiles>
+<profile name="HYT Display/GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="210">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_GPS_QUERY />
+<TX_FREE_TEXT_MESSAGE />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+<TX_SEND_RULE />
+</MatchRules>
+</profile>
+<profile name="HYT Display/NO GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="210">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_FREE_TEXT_MESSAGE />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+</MatchRules>
+</profile>
+<profile name="HYT NO Display/GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="210">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_GPS_QUERY />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+<TX_SEND_RULE />
+</MatchRules>
+</profile>
+<profile name="HYT NO Display/NO GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="210">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+</MatchRules>
+</profile>
+<profile name="HYT TALKGROUPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="210">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_FREE_TEXT_MESSAGE />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+</MatchRules>
+</profile>
+<profile name="MOTO Display/GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="200">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_GPS_QUERY />
+<TX_FREE_TEXT_MESSAGE />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+<TX_SEND_RULE />
+</MatchRules>
+</profile>
+<profile name="MOTO Display/NO GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="200">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_FREE_TEXT_MESSAGE />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+</MatchRules>
+</profile>
+<profile name="MOTO NO Display/GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="200">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_GPS_QUERY />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+<TX_SEND_RULE />
+</MatchRules>
+</profile>
+<profile name="MOTO NO Display/NO GPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="200">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_VOICE_CALL />
+<TX_RADIO_CHECK />
+<TX_REMOTE_MONITOR />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+<TX_RADIO_DISABLE_ON_OFF />
+<TX_PRESS_RELEASE_BUTTON />
+</MatchRules>
+</profile>
+<profile name="MOTO TALKGROUPS" EnableBusyChannelManagement="False" WaitInSecOnBusyChannel="0" TTLInSec="70" ConfigString="200">
+<MatchRules protocolDeviceName="HyteraProtocol"><TX_CHANGE_CHANNEL_STATUS />
+<TX_CALL />
+<TX_FREE_TEXT_MESSAGE />
+<TX_RADIO_SELECTION_TO_CONVERSATION />
+</MatchRules>
+</profile>
+</profiles>
+</RadioController>
