@@ -86,7 +86,14 @@ public class FtpClient
             
             await ftp.Connect(cancellationToken);
             
-            var status = await ftp.UploadFile(localFilePath, remoteFilePath, FtpRemoteExists.Overwrite, true, FtpVerify.None, null, cancellationToken);
+            var status = await ftp.UploadFile(
+                localFilePath, 
+                remoteFilePath, 
+                FtpRemoteExists.Overwrite, 
+                createRemoteDir: true, 
+                verifyOptions: FtpVerify.Retry, 
+                progress: null, 
+                cancellationToken);
             
             _logger.LogInformation("Upload completed: {FileName} - Status: {Status}", fileName, status);
 
