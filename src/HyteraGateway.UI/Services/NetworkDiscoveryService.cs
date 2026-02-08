@@ -15,6 +15,11 @@ namespace HyteraGateway.UI.Services;
 /// </summary>
 public class NetworkDiscoveryService
 {
+    // Hytera IPSC protocol constants
+    private static readonly byte[] IPSC_IDENT_PACKET = new byte[] { 0x50, 0x48, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00 };
+    private const int IPSC_CONNECT_TIMEOUT_MS = 2000;
+    private const int IPSC_READ_TIMEOUT_MS = 1000;
+
     /// <summary>
     /// Get all network interfaces that might be RNDIS or NCM (USB network adapters)
     /// </summary>
@@ -205,20 +210,62 @@ public class NetworkDiscoveryService
     /// <summary>
     /// Try to identify radio model by connecting and reading response
     /// </summary>
-    public virtual Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
+    public virtual async Task<DiscoveredRadio> IdentifyRadioAsync(string ipAddress)
     {
-        // TODO: Future enhancement - query IPSC protocol to get actual model info
-        // For now, we just return basic info
         var radio = new DiscoveredRadio
         {
             IpAddress = ipAddress,
             Port = 50000,
             ConnectionType = RadioConnectionType.Ethernet,
-            Model = "Unknown (Hytera IPSC)",
+            Model = "Hytera Radio",
             IsOnline = true,
             DiscoveredAt = DateTime.Now
         };
-        
-        return Task.FromResult(radio);
+
+        try
+        {
+            // Try to connect and get radio info via IPSC protocol
+            using var client = new TcpClient();
+            var connectTask = client.ConnectAsync(ipAddress, 50000);
+            if (await Task.WhenAny(connectTask, Task.Delay(IPSC_CONNECT_TIMEOUT_MS)) == connectTask && client.Connected)
+            {
+                // Send identification request (Hytera IPSC protocol)
+                var stream = client.GetStream();
+                
+                await stream.WriteAsync(IPSC_IDENT_PACKET, 0, IPSC_IDENT_PACKET.Length);
+                
+                // Read response
+                byte[] buffer = new byte[256];
+                var readTask = stream.ReadAsync(buffer, 0, buffer.Length);
+                if (await Task.WhenAny(readTask, Task.Delay(IPSC_READ_TIMEOUT_MS)) == readTask)
+                {
+                    int bytesRead = await readTask;
+                    if (bytesRead > 10)
+                    {
+                        // Parse response to extract model info
+                        // Hytera radios typically respond with model in ASCII
+                        string response = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                        
+                        if (response.Contains("MD785") || response.Contains("MD-785"))
+                            radio.Model = "Hytera MD785";
+                        else if (response.Contains("HM785") || response.Contains("HM-785"))
+                            radio.Model = "Hytera HM785";
+                        else if (response.Contains("MD655") || response.Contains("MD-655"))
+                            radio.Model = "Hytera MD655";
+                        else if (response.Contains("PD785") || response.Contains("PD-785"))
+                            radio.Model = "Hytera PD785";
+                        else if (response.Contains("Hytera"))
+                            radio.Model = "Hytera Radio (Unknown Model)";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to identify radio at {ipAddress}: {ex.Message}");
+            // Keep default model name on error
+        }
+
+        return radio;
     }
 }
