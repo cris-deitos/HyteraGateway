@@ -18,6 +18,11 @@ public class SettingsViewModelTests
     {
         _mockConfig = new Mock<ConfigurationService>();
         _mockNetworkDiscovery = new Mock<NetworkDiscoveryService>();
+        
+        // Setup mocks with default values so all tests can create SettingsViewModel
+        _mockConfig.Setup(c => c.Configuration).Returns(new UIConfiguration());
+        _mockNetworkDiscovery.Setup(n => n.GetUsbNetworkInterfaces())
+            .Returns(new List<NetworkInterfaceInfo>());
     }
 
     [Fact]
