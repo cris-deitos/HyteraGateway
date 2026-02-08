@@ -1,5 +1,5 @@
+using FluentFTP;
 using Microsoft.Extensions.Logging;
-using System.Net;
 
 namespace HyteraGateway.Radio.Services;
 
@@ -78,55 +78,32 @@ public class FtpClient
         {
             var fileName = Path.GetFileName(localFilePath);
             var remoteFilePath = $"{RemoteDirectory.TrimEnd('/')}/{fileName}";
-            var ftpUrl = $"ftp://{FtpHost}:{FtpPort}{remoteFilePath}";
 
-            _logger.LogDebug("Uploading {FileName} to {FtpUrl}", fileName, ftpUrl);
+            _logger.LogDebug("Uploading {FileName} to {FtpHost}:{FtpPort}{RemotePath}", fileName, FtpHost, FtpPort, remoteFilePath);
 
-            var request = (FtpWebRequest)WebRequest.Create(ftpUrl);
-            request.Method = WebRequestMethods.Ftp.UploadFile;
-            request.Credentials = new NetworkCredential(FtpUsername, FtpPassword);
-            request.UsePassive = UsePassive;
-            request.UseBinary = true;
-            request.KeepAlive = false;
-
-            // Upload the file
-            await using var fileStream = File.OpenRead(localFilePath);
-            await using var requestStream = await request.GetRequestStreamAsync();
+            using var ftp = new AsyncFtpClient(FtpHost, FtpUsername, FtpPassword, FtpPort);
+            ftp.Config.DataConnectionType = UsePassive ? FtpDataConnectionType.PASV : FtpDataConnectionType.PORT;
             
-            var buffer = new byte[8192];
-            int bytesRead;
+            await ftp.Connect(cancellationToken);
             
-            while ((bytesRead = await fileStream.ReadAsync(buffer, cancellationToken)) > 0)
-            {
-                await requestStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
-            }
-
-            // Get response
-            using var response = (FtpWebResponse)await request.GetResponseAsync();
+            var status = await ftp.UploadFile(
+                localFilePath, 
+                remoteFilePath, 
+                FtpRemoteExists.Overwrite, 
+                createRemoteDir: true, 
+                verifyOptions: FtpVerify.Retry, 
+                progress: null, 
+                cancellationToken);
             
-            _logger.LogInformation("Upload completed: {FileName} - {Status}", fileName, response.StatusDescription);
+            _logger.LogInformation("Upload completed: {FileName} - Status: {Status}", fileName, status);
 
             // Delete local file if configured
-            if (DeleteAfterUpload)
+            if (DeleteAfterUpload && status == FtpStatus.Success)
             {
                 await DeleteLocalFileAsync(localFilePath, cancellationToken);
             }
 
-            return response.StatusCode == FtpStatusCode.ClosingData || 
-                   response.StatusCode == FtpStatusCode.FileActionOK;
-        }
-        catch (WebException ex)
-        {
-            if (ex.Response is FtpWebResponse response)
-            {
-                _logger.LogError("FTP upload failed: {Status} - {StatusDescription}", 
-                    response.StatusCode, response.StatusDescription);
-            }
-            else
-            {
-                _logger.LogError(ex, "FTP upload failed for {FilePath}", localFilePath);
-            }
-            return false;
+            return status == FtpStatus.Success;
         }
         catch (Exception ex)
         {
@@ -175,18 +152,17 @@ public class FtpClient
 
         try
         {
-            var ftpUrl = $"ftp://{FtpHost}:{FtpPort}/";
-            var request = (FtpWebRequest)WebRequest.Create(ftpUrl);
-            request.Method = WebRequestMethods.Ftp.ListDirectory;
-            request.Credentials = new NetworkCredential(FtpUsername, FtpPassword);
-            request.UsePassive = UsePassive;
-            request.Timeout = 5000;
-
-            using var response = (FtpWebResponse)await request.GetResponseAsync();
+            using var ftp = new AsyncFtpClient(FtpHost, FtpUsername, FtpPassword, FtpPort);
+            ftp.Config.DataConnectionType = UsePassive ? FtpDataConnectionType.PASV : FtpDataConnectionType.PORT;
+            ftp.Config.ConnectTimeout = 5000;
             
-            _logger.LogInformation("FTP connection test successful: {Status}", response.StatusDescription);
-            return response.StatusCode == FtpStatusCode.OpeningData || 
-                   response.StatusCode == FtpStatusCode.DataAlreadyOpen;
+            await ftp.Connect(cancellationToken);
+            
+            var isConnected = ftp.IsConnected;
+            
+            _logger.LogInformation("FTP connection test {Result}", isConnected ? "successful" : "failed");
+            
+            return isConnected;
         }
         catch (Exception ex)
         {
@@ -205,29 +181,27 @@ public class FtpClient
     {
         try
         {
-            var ftpUrl = $"ftp://{FtpHost}:{FtpPort}{directoryPath}";
-            var request = (FtpWebRequest)WebRequest.Create(ftpUrl);
-            request.Method = WebRequestMethods.Ftp.MakeDirectory;
-            request.Credentials = new NetworkCredential(FtpUsername, FtpPassword);
-            request.UsePassive = UsePassive;
-
-            using var response = (FtpWebResponse)await request.GetResponseAsync();
+            using var ftp = new AsyncFtpClient(FtpHost, FtpUsername, FtpPassword, FtpPort);
+            ftp.Config.DataConnectionType = UsePassive ? FtpDataConnectionType.PASV : FtpDataConnectionType.PORT;
             
-            _logger.LogDebug("Created FTP directory: {Directory}", directoryPath);
-            return true;
-        }
-        catch (WebException ex)
-        {
-            // Directory might already exist
-            if (ex.Response is FtpWebResponse response)
+            await ftp.Connect(cancellationToken);
+            
+            var exists = await ftp.DirectoryExists(directoryPath, cancellationToken);
+            
+            if (!exists)
             {
-                if (response.StatusCode == FtpStatusCode.ActionNotTakenFileUnavailable)
-                {
-                    _logger.LogDebug("FTP directory already exists: {Directory}", directoryPath);
-                    return true;
-                }
+                await ftp.CreateDirectory(directoryPath, cancellationToken);
+                _logger.LogDebug("Created FTP directory: {Directory}", directoryPath);
+            }
+            else
+            {
+                _logger.LogDebug("FTP directory already exists: {Directory}", directoryPath);
             }
             
+            return true;
+        }
+        catch (Exception ex)
+        {
             _logger.LogWarning(ex, "Could not create FTP directory: {Directory}", directoryPath);
             return false;
         }
