@@ -15,5 +15,11 @@
   <ItemGroup>
     <ProjectReference Include="..\HyteraGateway.Core\HyteraGateway.Core.csproj" />
     <ProjectReference Include="..\HyteraGateway.Radio\HyteraGateway.Radio.csproj" />
+    <ProjectReference Include="..\HyteraGateway.Audio\HyteraGateway.Audio.csproj" />
+  </ItemGroup>
+
+  <!-- Include native libraries from runtimes folder -->
+  <ItemGroup>
+    <None Include="runtimes\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
