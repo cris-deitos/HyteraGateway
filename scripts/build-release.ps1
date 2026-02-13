@@ -36,6 +36,7 @@ $publishParams = @(
     "--self-contained", "true",
     "-p:PublishSingleFile=true",
     "-p:IncludeNativeLibrariesForSelfExtract=true",
+    "-p:IncludeAllContentForSelfExtract=true",
     "-p:EnableCompressionInSingleFile=true"
 )
 
